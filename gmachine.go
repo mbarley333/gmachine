@@ -3,7 +3,15 @@ package gmachine
 
 // DefaultMemSize is the number of 64-bit words of memory which will be
 // allocated to a new G-machine by default.
-const DefaultMemSize = 1024
+const (
+	DefaultMemSize = 1024
+)
+
+type OpCode uint64
+
+const (
+	HALT = iota
+)
 
 type Machine struct {
 	P      uint64
@@ -18,4 +26,13 @@ func New() *Machine {
 	}
 
 	return machine
+}
+
+func (m *Machine) Run() {
+
+	instruction := m.Memory[m.P]
+	m.P++
+	if instruction == HALT {
+		return
+	}
 }
