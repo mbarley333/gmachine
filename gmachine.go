@@ -7,23 +7,27 @@ const (
 	DefaultMemSize = 1024
 )
 
-type OpCode uint64
+type Word uint64
 
 const (
 	HALT = iota
 	NOOP
+	INCA
+	DECA
 )
 
 type Machine struct {
-	P      uint64
-	Memory []uint64
+	P      Word
+	A      Word
+	Memory []Word
 }
 
 func New() *Machine {
 
 	machine := &Machine{
 		P:      0,
-		Memory: make([]uint64, DefaultMemSize),
+		A:      0,
+		Memory: make([]Word, DefaultMemSize),
 	}
 
 	return machine
@@ -38,6 +42,19 @@ func (m *Machine) Run() {
 		case HALT:
 			return
 		case NOOP:
+		case INCA:
+			m.A++
+		case DECA:
+			m.A--
 		}
 	}
+}
+
+func (m *Machine) Calculate(opcodes []Word) {
+
+	for k, v := range opcodes {
+		m.Memory[k] = v
+	}
+	m.Run()
+
 }
