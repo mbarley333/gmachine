@@ -95,6 +95,33 @@ func TestDECA(t *testing.T) {
 
 }
 
+func TestSETA(t *testing.T) {
+	t.Parallel()
+
+	g := gmachine.New()
+
+	g.Memory[0] = gmachine.SETA
+	g.Memory[1] = 3
+
+	g.Run()
+
+	wantA := gmachine.Word(3)
+
+	gotA := g.A
+
+	if wantA != gotA {
+		t.Fatalf("SETA want: %d, got: %d", wantA, gotA)
+	}
+
+	wantP := gmachine.Word(3)
+	gotP := g.P
+
+	if wantP != gotP {
+		t.Fatalf("P want: %d, got: %d", wantP, gotP)
+	}
+
+}
+
 func TestCalculate(t *testing.T) {
 	t.Parallel()
 

@@ -14,6 +14,7 @@ const (
 	NOOP
 	INCA
 	DECA
+	SETA
 )
 
 type Machine struct {
@@ -36,6 +37,7 @@ func New() *Machine {
 func (m *Machine) Run() {
 
 	for {
+
 		instruction := m.Memory[m.P]
 		m.P++
 		switch instruction {
@@ -46,8 +48,19 @@ func (m *Machine) Run() {
 			m.A++
 		case DECA:
 			m.A--
+		case SETA:
+			m.A = m.Next()
+
 		}
 	}
+}
+
+func (m *Machine) Next() Word {
+	location := m.P
+	m.P++
+
+	return m.Memory[location]
+
 }
 
 func (m *Machine) Calculate(opcodes []Word) {
