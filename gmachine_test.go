@@ -39,3 +39,21 @@ func TestHalt(t *testing.T) {
 	}
 
 }
+
+func TestNOOP(t *testing.T) {
+	t.Parallel()
+
+	g := gmachine.New()
+
+	g.Memory[0] = gmachine.NOOP
+	g.Run()
+
+	var want uint64
+	want = 2
+	got := g.P
+
+	if want != got {
+		t.Fatalf("want: %d, got: %d", want, got)
+	}
+
+}
