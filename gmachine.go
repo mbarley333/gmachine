@@ -11,6 +11,7 @@ type OpCode uint64
 
 const (
 	HALT = iota
+	NOOP
 )
 
 type Machine struct {
@@ -30,9 +31,13 @@ func New() *Machine {
 
 func (m *Machine) Run() {
 
-	instruction := m.Memory[m.P]
-	m.P++
-	if instruction == HALT {
-		return
+	for {
+		instruction := m.Memory[m.P]
+		m.P++
+		switch instruction {
+		case HALT:
+			return
+		case NOOP:
+		}
 	}
 }
