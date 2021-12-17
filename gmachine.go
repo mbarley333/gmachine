@@ -1,6 +1,12 @@
 // Package gmachine implements a simple virtual CPU, known as the G-machine.
 package gmachine
 
+import (
+	"fmt"
+	"io"
+	"os"
+)
+
 // DefaultMemSize is the number of 64-bit words of memory which will be
 // allocated to a new G-machine by default.
 const (
@@ -15,20 +21,46 @@ const (
 	INCA
 	DECA
 	SETA
+	BIOS
 )
+
+const (
+	IOPNone = iota
+	IOPWrite
+)
+
+const (
+	SendToNone = iota
+	SendToStdOut
+)
+
+type Option func(*Machine) error
+
+func WithOutput(output io.Writer) Option {
+	return func(m *Machine) error {
+		m.output = output
+		return nil
+	}
+}
 
 type Machine struct {
 	P      Word
 	A      Word
+	I      Word
 	Memory []Word
+
+	output io.Writer
 }
 
-func New() *Machine {
+func New(opts ...Option) *Machine {
 
 	machine := &Machine{
-		P:      0,
-		A:      0,
 		Memory: make([]Word, DefaultMemSize),
+		output: os.Stdout,
+	}
+
+	for _, o := range opts {
+		o(machine)
 	}
 
 	return machine
@@ -50,6 +82,15 @@ func (m *Machine) Run() {
 			m.A--
 		case SETA:
 			m.A = m.Next()
+		case BIOS:
+			io := m.Next()
+			sendto := m.Next()
+
+			if io == IOPWrite {
+				if sendto == SendToStdOut {
+					fmt.Fprintf(m.output, "%c", m.A)
+				}
+			}
 
 		}
 	}

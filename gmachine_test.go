@@ -1,6 +1,7 @@
 package gmachine_test
 
 import (
+	"bytes"
 	"gmachine"
 	"testing"
 )
@@ -129,7 +130,7 @@ func TestSETA(t *testing.T) {
 
 }
 
-func TestCalculate(t *testing.T) {
+func TestRunProgram(t *testing.T) {
 	t.Parallel()
 
 	g := gmachine.New()
@@ -165,6 +166,32 @@ func TestCalculate(t *testing.T) {
 			t.Fatalf("want: %d, got: %d", want, got)
 		}
 
+	}
+
+}
+
+func TestBIOSWrite(t *testing.T) {
+	t.Parallel()
+
+	output := &bytes.Buffer{}
+	g := gmachine.New(
+		gmachine.WithOutput(output),
+	)
+
+	opcodes := []gmachine.Word{
+		gmachine.SETA,
+		'J',
+		gmachine.BIOS,
+		gmachine.IOPWrite,
+		gmachine.SendToStdOut,
+	}
+	g.RunProgram(opcodes)
+
+	want := "J"
+	got := output.String()
+
+	if want != got {
+		t.Fatalf("want: %q, got: %q", want, got)
 	}
 
 }
