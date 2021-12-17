@@ -63,7 +63,7 @@ func (m *Machine) Next() Word {
 
 }
 
-func (m *Machine) Calculate(opcodes []Word) {
+func (m *Machine) RunProgram(opcodes []Word) {
 
 	for k, v := range opcodes {
 		m.Memory[k] = v
