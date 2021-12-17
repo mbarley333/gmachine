@@ -22,6 +22,10 @@ func TestNew(t *testing.T) {
 	if wantMemValue != gotMemValue {
 		t.Errorf("want last memory location to contain %d, got %d", wantMemValue, gotMemValue)
 	}
+	var wantA uint64 = 0
+	if wantA != g.A {
+		t.Errorf("want initial A value %d, got %d", wantA, g.A)
+	}
 }
 
 func TestHalt(t *testing.T) {
@@ -51,6 +55,43 @@ func TestNOOP(t *testing.T) {
 	var want uint64
 	want = 2
 	got := g.P
+
+	if want != got {
+		t.Fatalf("want: %d, got: %d", want, got)
+	}
+
+}
+
+func TestINCA(t *testing.T) {
+	t.Parallel()
+
+	g := gmachine.New()
+
+	g.Memory[0] = gmachine.INCA
+	g.Run()
+
+	var want uint64
+	want = 1
+	got := g.A
+
+	if want != got {
+		t.Fatalf("want: %d, got: %d", want, got)
+	}
+
+}
+
+func TestDECA(t *testing.T) {
+	t.Parallel()
+
+	g := gmachine.New()
+
+	g.Memory[0] = gmachine.DECA
+	g.A = 2
+	g.Run()
+
+	var want uint64
+	want = 1
+	got := g.A
 
 	if want != got {
 		t.Fatalf("want: %d, got: %d", want, got)

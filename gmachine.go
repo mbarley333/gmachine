@@ -12,10 +12,13 @@ type OpCode uint64
 const (
 	HALT = iota
 	NOOP
+	INCA
+	DECA
 )
 
 type Machine struct {
 	P      uint64
+	A      uint64
 	Memory []uint64
 }
 
@@ -23,6 +26,7 @@ func New() *Machine {
 
 	machine := &Machine{
 		P:      0,
+		A:      0,
 		Memory: make([]uint64, DefaultMemSize),
 	}
 
@@ -38,6 +42,10 @@ func (m *Machine) Run() {
 		case HALT:
 			return
 		case NOOP:
+		case INCA:
+			m.A++
+		case DECA:
+			m.A--
 		}
 	}
 }
