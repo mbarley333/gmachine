@@ -48,8 +48,10 @@ func TestNOOP(t *testing.T) {
 
 	g := gmachine.New()
 
-	g.Memory[0] = gmachine.NOOP
-	g.Run()
+	opcodes := []gmachine.Word{
+		gmachine.NOOP,
+	}
+	g.RunProgram(opcodes)
 
 	want := gmachine.Word(2)
 	got := g.P
@@ -65,8 +67,10 @@ func TestINCA(t *testing.T) {
 
 	g := gmachine.New()
 
-	g.Memory[0] = gmachine.INCA
-	g.Run()
+	opcodes := []gmachine.Word{
+		gmachine.INCA,
+	}
+	g.RunProgram(opcodes)
 
 	want := gmachine.Word(1)
 	got := g.A
@@ -81,10 +85,12 @@ func TestDECA(t *testing.T) {
 	t.Parallel()
 
 	g := gmachine.New()
-
-	g.Memory[0] = gmachine.DECA
 	g.A = 2
-	g.Run()
+
+	opcodes := []gmachine.Word{
+		gmachine.DECA,
+	}
+	g.RunProgram(opcodes)
 
 	want := gmachine.Word(1)
 	got := g.A
@@ -95,20 +101,70 @@ func TestDECA(t *testing.T) {
 
 }
 
+func TestSETA(t *testing.T) {
+	t.Parallel()
+
+	g := gmachine.New()
+
+	opcodes := []gmachine.Word{
+		gmachine.SETA,
+		3,
+	}
+	g.RunProgram(opcodes)
+
+	wantA := gmachine.Word(3)
+
+	gotA := g.A
+
+	if wantA != gotA {
+		t.Fatalf("SETA want: %d, got: %d", wantA, gotA)
+	}
+
+	wantP := gmachine.Word(3)
+	gotP := g.P
+
+	if wantP != gotP {
+		t.Fatalf("P want: %d, got: %d", wantP, gotP)
+	}
+
+}
+
 func TestCalculate(t *testing.T) {
 	t.Parallel()
 
 	g := gmachine.New()
-	g.A = 3
 
-	opcodes := []gmachine.Word{gmachine.DECA, gmachine.DECA}
-
-	g.Calculate(opcodes)
-
-	want := gmachine.Word(1)
-	got := g.A
-
-	if want != got {
-		t.Fatalf("want: %d, got: %d", want, got)
+	type testCase struct {
+		opcodes        []gmachine.Word
+		expectedResult gmachine.Word
 	}
+
+	tcs := []testCase{
+		{
+			opcodes:        []gmachine.Word{gmachine.SETA, 5, gmachine.DECA, gmachine.DECA},
+			expectedResult: gmachine.Word(3),
+		},
+		{
+			opcodes:        []gmachine.Word{gmachine.SETA, 7, gmachine.DECA, gmachine.DECA},
+			expectedResult: gmachine.Word(5),
+		},
+		{
+			opcodes:        []gmachine.Word{gmachine.SETA, 2, gmachine.DECA, gmachine.DECA},
+			expectedResult: gmachine.Word(0),
+		},
+	}
+
+	for _, tc := range tcs {
+		g.P = gmachine.Word(0)
+		g.RunProgram(tc.opcodes)
+
+		want := tc.expectedResult
+		got := g.A
+
+		if want != got {
+			t.Fatalf("want: %d, got: %d", want, got)
+		}
+
+	}
+
 }
