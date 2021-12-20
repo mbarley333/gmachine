@@ -27,11 +27,13 @@ const (
 const (
 	IOPNone = iota
 	IOPWrite
+	IOPRead
 )
 
 const (
 	SendToNone = iota
 	SendToStdOut
+	ReadFromStdin
 )
 
 type Option func(*Machine) error
@@ -43,6 +45,13 @@ func WithOutput(output io.Writer) Option {
 	}
 }
 
+func WithInput(input io.Reader) Option {
+	return func(m *Machine) error {
+		m.input = input
+		return nil
+	}
+}
+
 type Machine struct {
 	P      Word
 	A      Word
@@ -50,6 +59,7 @@ type Machine struct {
 	Memory []Word
 
 	output io.Writer
+	input  io.Reader
 }
 
 func New(opts ...Option) *Machine {
@@ -57,6 +67,7 @@ func New(opts ...Option) *Machine {
 	machine := &Machine{
 		Memory: make([]Word, DefaultMemSize),
 		output: os.Stdout,
+		input:  os.Stdin,
 	}
 
 	for _, o := range opts {
