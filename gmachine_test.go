@@ -7,6 +7,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
+
 	t.Parallel()
 	g := gmachine.New()
 	wantMemSize := gmachine.DefaultMemSize
@@ -192,6 +193,55 @@ func TestBIOSWrite(t *testing.T) {
 
 	if want != got {
 		t.Fatalf("want: %q, got: %q", want, got)
+	}
+
+}
+
+func TestSETI(t *testing.T) {
+	t.Parallel()
+
+	g := gmachine.New()
+
+	wantNoI := gmachine.Word(0)
+
+	gotNoI := g.I
+
+	if wantNoI != gotNoI {
+		t.Fatalf("want: %d, got: %d", wantNoI, gotNoI)
+	}
+
+	opcodes := []gmachine.Word{
+		gmachine.SETI,
+		3,
+	}
+	g.RunProgram(opcodes)
+
+	want := gmachine.Word(3)
+	got := g.I
+
+	if want != got {
+		t.Fatalf("want: %d, got: %d", want, got)
+	}
+
+}
+
+func TestINCI(t *testing.T) {
+	t.Parallel()
+
+	g := gmachine.New()
+
+	opcodes := []gmachine.Word{
+		gmachine.SETI,
+		3,
+		gmachine.INCI,
+	}
+	g.RunProgram(opcodes)
+
+	want := gmachine.Word(4)
+	got := g.I
+
+	if want != got {
+		t.Fatalf("want: %d, got: %d", want, got)
 	}
 
 }

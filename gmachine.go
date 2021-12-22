@@ -22,6 +22,8 @@ const (
 	DECA
 	SETA
 	BIOS
+	SETI
+	INCI
 )
 
 const (
@@ -93,6 +95,10 @@ func (m *Machine) Run() {
 			m.A--
 		case SETA:
 			m.A = m.Next()
+		case SETI:
+			m.I = m.Next()
+		case INCI:
+			m.I++
 		case BIOS:
 			io := m.Next()
 			sendto := m.Next()
