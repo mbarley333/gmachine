@@ -315,12 +315,85 @@ func TestCMPI(t *testing.T) {
 		g := gmachine.New()
 
 		g.RunProgram(tc.opcodes)
-		got := g.Zero
+		got := g.FlagZero
 
 		if tc.want != got {
 			t.Fatalf("%s want: %v, got: %v", tc.description, tc.want, got)
 		}
 
+	}
+
+}
+
+func TestLoopWithJMPZ(t *testing.T) {
+
+	t.Parallel()
+
+	g := gmachine.New()
+
+	opcodes := []gmachine.Word{
+
+		gmachine.INCI,
+		gmachine.CMPI,
+		10,
+		gmachine.JMPZ,
+		0,
+	}
+
+	g.RunProgram(opcodes)
+
+	want := gmachine.Word(10)
+	got := g.I
+
+	if want != got {
+		t.Fatalf("want: %d, got: %d", want, got)
+	}
+
+}
+
+func TestHelloWorld(t *testing.T) {
+
+	t.Parallel()
+
+	output := &bytes.Buffer{}
+
+	g := gmachine.New(
+		gmachine.WithOutput(output),
+	)
+
+	opcodes := []gmachine.Word{
+		gmachine.JUMP,
+		12,
+		72,
+		101,
+		108,
+		108,
+		111,
+		87,
+		111,
+		114,
+		108,
+		100,
+		gmachine.SETI,
+		2,
+		gmachine.SETATOM,
+		gmachine.BIOS,
+		gmachine.IOPWrite,
+		gmachine.SendToStdOut,
+		gmachine.INCI,
+		gmachine.CMPI,
+		12,
+		gmachine.JMPZ,
+		14,
+	}
+
+	g.RunProgram(opcodes)
+
+	want := "HelloWorld"
+	got := output.String()
+
+	if want != got {
+		t.Fatalf("want: %q, got: %q", want, got)
 	}
 
 }

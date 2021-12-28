@@ -26,6 +26,7 @@ const (
 	INCI
 	CMPI
 	JUMP
+	JMPZ
 	SETATOM
 )
 
@@ -58,11 +59,11 @@ func WithInput(input io.Reader) Option {
 }
 
 type Machine struct {
-	P      Word
-	A      Word
-	I      Word
-	Memory []Word
-	Zero   bool
+	P        Word
+	A        Word
+	I        Word
+	Memory   []Word
+	FlagZero bool
 
 	output io.Writer
 	input  io.Reader
@@ -108,9 +109,9 @@ func (m *Machine) Run() {
 		case CMPI:
 			iValue := m.Next()
 			if iValue == m.I {
-				m.Zero = true
+				m.FlagZero = true
 			} else {
-				m.Zero = false
+				m.FlagZero = false
 			}
 
 		case BIOS:
@@ -124,6 +125,10 @@ func (m *Machine) Run() {
 			}
 		case JUMP:
 			m.P = m.Next()
+		case JMPZ:
+			if !m.FlagZero {
+				m.P = m.Next()
+			}
 
 		}
 	}
