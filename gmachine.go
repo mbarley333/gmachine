@@ -92,9 +92,9 @@ func (m *Machine) Run() {
 
 	for {
 
-		instruction := m.Memory[m.P]
+		opcode := m.Memory[m.P]
 		m.P++
-		switch instruction {
+		switch opcode {
 		case OpHALT:
 			return
 		case OpNOOP:
