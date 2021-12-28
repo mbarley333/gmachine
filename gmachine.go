@@ -24,6 +24,9 @@ const (
 	BIOS
 	SETI
 	INCI
+	CMPI
+	JUMP
+	SETATOM
 )
 
 const (
@@ -59,6 +62,7 @@ type Machine struct {
 	A      Word
 	I      Word
 	Memory []Word
+	Zero   bool
 
 	output io.Writer
 	input  io.Reader
@@ -82,7 +86,7 @@ func New(opts ...Option) *Machine {
 func (m *Machine) Run() {
 
 	for {
-
+		fmt.Println(m.P)
 		instruction := m.Memory[m.P]
 		m.P++
 		switch instruction {
@@ -95,10 +99,19 @@ func (m *Machine) Run() {
 			m.A--
 		case SETA:
 			m.A = m.Next()
+		case SETATOM:
+			m.A = m.Memory[m.I]
 		case SETI:
 			m.I = m.Next()
 		case INCI:
 			m.I++
+		case CMPI:
+			iValue := m.Next()
+
+			if iValue == m.I {
+				m.Zero = true
+			}
+
 		case BIOS:
 			io := m.Next()
 			sendto := m.Next()
@@ -108,9 +121,12 @@ func (m *Machine) Run() {
 					fmt.Fprintf(m.output, "%c", m.A)
 				}
 			}
+		case JUMP:
+			m.P = m.Next()
 
 		}
 	}
+
 }
 
 func (m *Machine) Next() Word {
@@ -126,6 +142,7 @@ func (m *Machine) RunProgram(opcodes []Word) {
 	for k, v := range opcodes {
 		m.Memory[k] = v
 	}
+
 	m.Run()
 
 }

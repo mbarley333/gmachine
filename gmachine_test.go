@@ -245,3 +245,75 @@ func TestINCI(t *testing.T) {
 	}
 
 }
+
+func TestJUMP(t *testing.T) {
+
+	t.Parallel()
+
+	g := gmachine.New()
+
+	opcodes := []gmachine.Word{
+		gmachine.JUMP,
+		3,
+		'A',
+		gmachine.SETI,
+		2,
+	}
+
+	g.RunProgram(opcodes)
+
+	wantI := gmachine.Word(2)
+	gotI := g.I
+
+	if wantI != gotI {
+		t.Fatalf("want: %d, got: %d", wantI, gotI)
+	}
+
+}
+
+func TestSETATOM(t *testing.T) {
+
+	t.Parallel()
+
+	g := gmachine.New()
+
+	opcodes := []gmachine.Word{
+		gmachine.SETI,
+		2,
+		72,
+		gmachine.SETATOM,
+	}
+
+	g.RunProgram(opcodes)
+
+	want := gmachine.Word(72)
+	got := g.A
+
+	if want != got {
+		t.Fatalf("want: %d, got: %d", want, got)
+	}
+
+}
+
+func TestCMPI(t *testing.T) {
+	t.Parallel()
+
+	g := gmachine.New()
+
+	opcodes := []gmachine.Word{
+		gmachine.SETI,
+		2,
+		gmachine.CMPI,
+		2,
+	}
+
+	g.RunProgram(opcodes)
+
+	want := true
+	got := g.Zero
+
+	if want != got {
+		t.Fatalf("want: %v, got: %v", want, got)
+	}
+
+}
