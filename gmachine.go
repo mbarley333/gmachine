@@ -7,8 +7,50 @@ import (
 	"os"
 )
 
+// 6502, zeta
+// assembler, create a binary, executor, create arm64 binary - string matching, bufio scanner, word by word
+// opcodes with some operands vs none
+// generate
+// stack - store state, stack pointer
+// tokens - const (e.g for)
+// convert string to opcodes
+// define const - pi
+// label print
+// assembler code
+// subroutines print -
+// go tool compile -S             compile but stop - no bin
+// go tool compile -S gmachine.go | code -
+// otool -vVt main | code -
+// llvm
+// not gate, register
+// draw a triangle
+// GPU draws triangle (hardware)
+// mutex, concurrent
+// locking
+// disallow interrupt
+// stack - push/pop
+// mem fetch speed - get whole block
+// delay in memory fetch
+// cache - concurrency
+// i/o - routine, memory address 9000 - print string, std lib - BIOS, ships with the machine
+// memory mapped io - write to memory location that sends to
 // DefaultMemSize is the number of 64-bit words of memory which will be
 // allocated to a new G-machine by default.
+
+// virtual memory
+//
+// dynamic memory sizing
+// allocating more space as we go
+// 9M
+
+// layer to make app thinks it has access to machine - OS
+// stdlib, runtime
+
+// submit text instead of big array
+
+// could i write tests as gmachine programs -- list of tests, testing framework
+// opcode gmachine failtest
+
 const (
 	DefaultMemSize = 1024
 )
@@ -56,6 +98,17 @@ func WithInput(input io.Reader) Option {
 		m.input = input
 		return nil
 	}
+}
+
+type Instruction struct {
+	Opcode   Word
+	Operands int
+}
+
+var TranslatorMap = map[string]Instruction{
+	"HALT": {Opcode: OpSETA, Operands: 0},
+	"SETA": {Opcode: OpSETA, Operands: 1},
+	"SETA": {Opcode: OpSETA, Operands: 1},
 }
 
 // P is Program Counter
@@ -117,7 +170,6 @@ func (m *Machine) Run() {
 			} else {
 				m.FlagZero = false
 			}
-
 		case OpBIOS:
 			io := m.Next()
 			sendto := m.Next()
@@ -133,7 +185,6 @@ func (m *Machine) Run() {
 			if !m.FlagZero {
 				m.P = m.Next()
 			}
-
 		}
 	}
 
@@ -144,7 +195,6 @@ func (m *Machine) Next() Word {
 	m.P++
 
 	return m.Memory[location]
-
 }
 
 func (m *Machine) RunProgram(opcodes []Word) {
@@ -154,5 +204,4 @@ func (m *Machine) RunProgram(opcodes []Word) {
 	}
 
 	m.Run()
-
 }

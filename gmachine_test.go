@@ -378,7 +378,7 @@ func TestHelloWorld(t *testing.T) {
 		2,
 		gmachine.OpSETATOM,
 		gmachine.OpBIOS,
-		gmachine.IOPWrite,
+		gmachine.IOWrite,
 		gmachine.SendToStdOut,
 		gmachine.OpINCI,
 		gmachine.OpCMPI,
