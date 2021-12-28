@@ -298,22 +298,29 @@ func TestSETATOM(t *testing.T) {
 func TestCMPI(t *testing.T) {
 	t.Parallel()
 
-	g := gmachine.New()
-
-	opcodes := []gmachine.Word{
-		gmachine.SETI,
-		2,
-		gmachine.CMPI,
-		2,
+	type testCase struct {
+		opcodes     []gmachine.Word
+		want        bool
+		description string
 	}
 
-	g.RunProgram(opcodes)
+	tcs := []testCase{
+		{opcodes: []gmachine.Word{gmachine.SETI, 2, gmachine.CMPI, 2}, want: true, description: "2 == 2"},
+		{opcodes: []gmachine.Word{gmachine.SETI, 2, gmachine.CMPI, 3}, want: false, description: "2 != 3"},
+		{opcodes: []gmachine.Word{gmachine.SETI, 2, gmachine.CMPI, 3, gmachine.SETI, 3, gmachine.CMPI, 3}, want: true, description: "3 != 2, 3 == 3"},
+	}
 
-	want := true
-	got := g.Zero
+	for _, tc := range tcs {
 
-	if want != got {
-		t.Fatalf("want: %v, got: %v", want, got)
+		g := gmachine.New()
+
+		g.RunProgram(tc.opcodes)
+		got := g.Zero
+
+		if tc.want != got {
+			t.Fatalf("%s want: %v, got: %v", tc.description, tc.want, got)
+		}
+
 	}
 
 }

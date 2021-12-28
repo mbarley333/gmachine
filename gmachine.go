@@ -86,7 +86,7 @@ func New(opts ...Option) *Machine {
 func (m *Machine) Run() {
 
 	for {
-		fmt.Println(m.P)
+
 		instruction := m.Memory[m.P]
 		m.P++
 		switch instruction {
@@ -107,9 +107,10 @@ func (m *Machine) Run() {
 			m.I++
 		case CMPI:
 			iValue := m.Next()
-
 			if iValue == m.I {
 				m.Zero = true
+			} else {
+				m.Zero = false
 			}
 
 		case BIOS:
