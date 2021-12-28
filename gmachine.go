@@ -16,20 +16,24 @@ const (
 type Word uint64
 
 const (
-	HALT = iota
-	NOOP
-	INCA
-	DECA
-	SETA
-	BIOS
-	SETI
-	INCI
+	OpHALT = iota
+	OpNOOP
+	OpINCA
+	OpDECA
+	OpSETA
+	OpBIOS
+	OpSETI
+	OpINCI
+	OpCMPI
+	OpJUMP
+	OpJMPZ
+	OpSETATOM
 )
 
 const (
-	IOPNone = iota
-	IOPWrite
-	IOPRead
+	IONone = iota
+	IOWrite
+	IORead
 )
 
 const (
@@ -54,11 +58,16 @@ func WithInput(input io.Reader) Option {
 	}
 }
 
+// P is Program Counter
+// A is Arithmatic
+// I holds the index value of memory location
+// FlagZero used for loop operations and any boolean state holder
 type Machine struct {
-	P      Word
-	A      Word
-	I      Word
-	Memory []Word
+	P        Word
+	A        Word
+	I        Word
+	Memory   []Word
+	FlagZero bool
 
 	output io.Writer
 	input  io.Reader
@@ -83,34 +92,51 @@ func (m *Machine) Run() {
 
 	for {
 
-		instruction := m.Memory[m.P]
+		opcode := m.Memory[m.P]
 		m.P++
-		switch instruction {
-		case HALT:
+		switch opcode {
+		case OpHALT:
 			return
-		case NOOP:
-		case INCA:
+		case OpNOOP:
+		case OpINCA:
 			m.A++
-		case DECA:
+		case OpDECA:
 			m.A--
-		case SETA:
+		case OpSETA:
 			m.A = m.Next()
-		case SETI:
+		case OpSETATOM:
+			m.A = m.Memory[m.I]
+		case OpSETI:
 			m.I = m.Next()
-		case INCI:
+		case OpINCI:
 			m.I++
-		case BIOS:
+		case OpCMPI:
+			iValue := m.Next()
+			if iValue == m.I {
+				m.FlagZero = true
+			} else {
+				m.FlagZero = false
+			}
+
+		case OpBIOS:
 			io := m.Next()
 			sendto := m.Next()
 
-			if io == IOPWrite {
+			if io == IOWrite {
 				if sendto == SendToStdOut {
 					fmt.Fprintf(m.output, "%c", m.A)
 				}
 			}
+		case OpJUMP:
+			m.P = m.Next()
+		case OpJMPZ:
+			if !m.FlagZero {
+				m.P = m.Next()
+			}
 
 		}
 	}
+
 }
 
 func (m *Machine) Next() Word {
@@ -126,6 +152,7 @@ func (m *Machine) RunProgram(opcodes []Word) {
 	for k, v := range opcodes {
 		m.Memory[k] = v
 	}
+
 	m.Run()
 
 }

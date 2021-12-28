@@ -51,7 +51,7 @@ func TestNOOP(t *testing.T) {
 	g := gmachine.New()
 
 	opcodes := []gmachine.Word{
-		gmachine.NOOP,
+		gmachine.OpNOOP,
 	}
 	g.RunProgram(opcodes)
 
@@ -70,7 +70,7 @@ func TestINCA(t *testing.T) {
 	g := gmachine.New()
 
 	opcodes := []gmachine.Word{
-		gmachine.INCA,
+		gmachine.OpINCA,
 	}
 	g.RunProgram(opcodes)
 
@@ -90,7 +90,7 @@ func TestDECA(t *testing.T) {
 	g.A = 2
 
 	opcodes := []gmachine.Word{
-		gmachine.DECA,
+		gmachine.OpDECA,
 	}
 	g.RunProgram(opcodes)
 
@@ -109,7 +109,7 @@ func TestSETA(t *testing.T) {
 	g := gmachine.New()
 
 	opcodes := []gmachine.Word{
-		gmachine.SETA,
+		gmachine.OpSETA,
 		3,
 	}
 	g.RunProgram(opcodes)
@@ -143,15 +143,15 @@ func TestRunProgram(t *testing.T) {
 
 	tcs := []testCase{
 		{
-			opcodes:        []gmachine.Word{gmachine.SETA, 5, gmachine.DECA, gmachine.DECA},
+			opcodes:        []gmachine.Word{gmachine.OpSETA, 5, gmachine.OpDECA, gmachine.OpDECA},
 			expectedResult: gmachine.Word(3),
 		},
 		{
-			opcodes:        []gmachine.Word{gmachine.SETA, 7, gmachine.DECA, gmachine.DECA},
+			opcodes:        []gmachine.Word{gmachine.OpSETA, 7, gmachine.OpDECA, gmachine.OpDECA},
 			expectedResult: gmachine.Word(5),
 		},
 		{
-			opcodes:        []gmachine.Word{gmachine.SETA, 2, gmachine.DECA, gmachine.DECA},
+			opcodes:        []gmachine.Word{gmachine.OpSETA, 2, gmachine.OpDECA, gmachine.OpDECA},
 			expectedResult: gmachine.Word(0),
 		},
 	}
@@ -180,9 +180,9 @@ func TestBIOSWrite(t *testing.T) {
 	)
 
 	opcodes := []gmachine.Word{
-		gmachine.SETA,
+		gmachine.OpSETA,
 		'J',
-		gmachine.BIOS,
+		gmachine.OpBIOS,
 		gmachine.IOPWrite,
 		gmachine.SendToStdOut,
 	}
@@ -211,7 +211,7 @@ func TestSETI(t *testing.T) {
 	}
 
 	opcodes := []gmachine.Word{
-		gmachine.SETI,
+		gmachine.OpSETI,
 		3,
 	}
 	g.RunProgram(opcodes)
@@ -231,9 +231,9 @@ func TestINCI(t *testing.T) {
 	g := gmachine.New()
 
 	opcodes := []gmachine.Word{
-		gmachine.SETI,
+		gmachine.OpSETI,
 		3,
-		gmachine.INCI,
+		gmachine.OpINCI,
 	}
 	g.RunProgram(opcodes)
 
@@ -242,6 +242,158 @@ func TestINCI(t *testing.T) {
 
 	if want != got {
 		t.Fatalf("want: %d, got: %d", want, got)
+	}
+
+}
+
+func TestJUMP(t *testing.T) {
+
+	t.Parallel()
+
+	g := gmachine.New()
+
+	opcodes := []gmachine.Word{
+		gmachine.OpJUMP,
+		3,
+		'A',
+		gmachine.OpSETI,
+		2,
+	}
+
+	g.RunProgram(opcodes)
+
+	wantI := gmachine.Word(2)
+	gotI := g.I
+
+	if wantI != gotI {
+		t.Fatalf("want: %d, got: %d", wantI, gotI)
+	}
+
+}
+
+func TestSETATOM(t *testing.T) {
+
+	t.Parallel()
+
+	g := gmachine.New()
+
+	opcodes := []gmachine.Word{
+		gmachine.OpSETI,
+		2,
+		72,
+		gmachine.OpSETATOM,
+	}
+
+	g.RunProgram(opcodes)
+
+	want := gmachine.Word(72)
+	got := g.A
+
+	if want != got {
+		t.Fatalf("want: %d, got: %d", want, got)
+	}
+
+}
+
+func TestCMPI(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		opcodes     []gmachine.Word
+		want        bool
+		description string
+	}
+
+	tcs := []testCase{
+		{opcodes: []gmachine.Word{gmachine.OpSETI, 2, gmachine.OpCMPI, 2}, want: true, description: "2 == 2"},
+		{opcodes: []gmachine.Word{gmachine.OpSETI, 2, gmachine.OpCMPI, 3}, want: false, description: "2 != 3"},
+		{opcodes: []gmachine.Word{gmachine.OpSETI, 2, gmachine.OpCMPI, 3, gmachine.OpSETI, 3, gmachine.OpCMPI, 3}, want: true, description: "3 != 2, 3 == 3"},
+	}
+
+	for _, tc := range tcs {
+
+		g := gmachine.New()
+
+		g.RunProgram(tc.opcodes)
+		got := g.FlagZero
+
+		if tc.want != got {
+			t.Fatalf("%s want: %v, got: %v", tc.description, tc.want, got)
+		}
+
+	}
+
+}
+
+func TestLoopWithJMPZ(t *testing.T) {
+
+	t.Parallel()
+
+	g := gmachine.New()
+
+	opcodes := []gmachine.Word{
+
+		gmachine.OpINCI,
+		gmachine.OpCMPI,
+		10,
+		gmachine.OpJMPZ,
+		0,
+	}
+
+	g.RunProgram(opcodes)
+
+	want := gmachine.Word(10)
+	got := g.I
+
+	if want != got {
+		t.Fatalf("want: %d, got: %d", want, got)
+	}
+
+}
+
+func TestHelloWorld(t *testing.T) {
+
+	t.Parallel()
+
+	output := &bytes.Buffer{}
+
+	g := gmachine.New(
+		gmachine.WithOutput(output),
+	)
+
+	opcodes := []gmachine.Word{
+		gmachine.OpJUMP,
+		12,
+		72,
+		101,
+		108,
+		108,
+		111,
+		87,
+		111,
+		114,
+		108,
+		100,
+		gmachine.OpSETI,
+		2,
+		gmachine.OpSETATOM,
+		gmachine.OpBIOS,
+		gmachine.IOPWrite,
+		gmachine.SendToStdOut,
+		gmachine.OpINCI,
+		gmachine.OpCMPI,
+		12,
+		gmachine.OpJMPZ,
+		14,
+	}
+
+	g.RunProgram(opcodes)
+
+	want := "HelloWorld"
+	got := output.String()
+
+	if want != got {
+		t.Fatalf("want: %q, got: %q", want, got)
 	}
 
 }
