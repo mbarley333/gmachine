@@ -51,7 +51,7 @@ func TestNOOP(t *testing.T) {
 	g := gmachine.New()
 
 	opcodes := []gmachine.Word{
-		gmachine.NOOP,
+		gmachine.OpNOOP,
 	}
 	g.RunProgram(opcodes)
 
@@ -70,7 +70,7 @@ func TestINCA(t *testing.T) {
 	g := gmachine.New()
 
 	opcodes := []gmachine.Word{
-		gmachine.INCA,
+		gmachine.OpINCA,
 	}
 	g.RunProgram(opcodes)
 
@@ -90,7 +90,7 @@ func TestDECA(t *testing.T) {
 	g.A = 2
 
 	opcodes := []gmachine.Word{
-		gmachine.DECA,
+		gmachine.OpDECA,
 	}
 	g.RunProgram(opcodes)
 
@@ -109,7 +109,7 @@ func TestSETA(t *testing.T) {
 	g := gmachine.New()
 
 	opcodes := []gmachine.Word{
-		gmachine.SETA,
+		gmachine.OpSETA,
 		3,
 	}
 	g.RunProgram(opcodes)
@@ -143,15 +143,15 @@ func TestRunProgram(t *testing.T) {
 
 	tcs := []testCase{
 		{
-			opcodes:        []gmachine.Word{gmachine.SETA, 5, gmachine.DECA, gmachine.DECA},
+			opcodes:        []gmachine.Word{gmachine.OpSETA, 5, gmachine.OpDECA, gmachine.OpDECA},
 			expectedResult: gmachine.Word(3),
 		},
 		{
-			opcodes:        []gmachine.Word{gmachine.SETA, 7, gmachine.DECA, gmachine.DECA},
+			opcodes:        []gmachine.Word{gmachine.OpSETA, 7, gmachine.OpDECA, gmachine.OpDECA},
 			expectedResult: gmachine.Word(5),
 		},
 		{
-			opcodes:        []gmachine.Word{gmachine.SETA, 2, gmachine.DECA, gmachine.DECA},
+			opcodes:        []gmachine.Word{gmachine.OpSETA, 2, gmachine.OpDECA, gmachine.OpDECA},
 			expectedResult: gmachine.Word(0),
 		},
 	}
@@ -180,9 +180,9 @@ func TestBIOSWrite(t *testing.T) {
 	)
 
 	opcodes := []gmachine.Word{
-		gmachine.SETA,
+		gmachine.OpSETA,
 		'J',
-		gmachine.BIOS,
+		gmachine.OpBIOS,
 		gmachine.IOPWrite,
 		gmachine.SendToStdOut,
 	}
@@ -211,7 +211,7 @@ func TestSETI(t *testing.T) {
 	}
 
 	opcodes := []gmachine.Word{
-		gmachine.SETI,
+		gmachine.OpSETI,
 		3,
 	}
 	g.RunProgram(opcodes)
@@ -231,9 +231,9 @@ func TestINCI(t *testing.T) {
 	g := gmachine.New()
 
 	opcodes := []gmachine.Word{
-		gmachine.SETI,
+		gmachine.OpSETI,
 		3,
-		gmachine.INCI,
+		gmachine.OpINCI,
 	}
 	g.RunProgram(opcodes)
 
@@ -253,10 +253,10 @@ func TestJUMP(t *testing.T) {
 	g := gmachine.New()
 
 	opcodes := []gmachine.Word{
-		gmachine.JUMP,
+		gmachine.OpJUMP,
 		3,
 		'A',
-		gmachine.SETI,
+		gmachine.OpSETI,
 		2,
 	}
 
@@ -278,10 +278,10 @@ func TestSETATOM(t *testing.T) {
 	g := gmachine.New()
 
 	opcodes := []gmachine.Word{
-		gmachine.SETI,
+		gmachine.OpSETI,
 		2,
 		72,
-		gmachine.SETATOM,
+		gmachine.OpSETATOM,
 	}
 
 	g.RunProgram(opcodes)
@@ -305,9 +305,9 @@ func TestCMPI(t *testing.T) {
 	}
 
 	tcs := []testCase{
-		{opcodes: []gmachine.Word{gmachine.SETI, 2, gmachine.CMPI, 2}, want: true, description: "2 == 2"},
-		{opcodes: []gmachine.Word{gmachine.SETI, 2, gmachine.CMPI, 3}, want: false, description: "2 != 3"},
-		{opcodes: []gmachine.Word{gmachine.SETI, 2, gmachine.CMPI, 3, gmachine.SETI, 3, gmachine.CMPI, 3}, want: true, description: "3 != 2, 3 == 3"},
+		{opcodes: []gmachine.Word{gmachine.OpSETI, 2, gmachine.OpCMPI, 2}, want: true, description: "2 == 2"},
+		{opcodes: []gmachine.Word{gmachine.OpSETI, 2, gmachine.OpCMPI, 3}, want: false, description: "2 != 3"},
+		{opcodes: []gmachine.Word{gmachine.OpSETI, 2, gmachine.OpCMPI, 3, gmachine.OpSETI, 3, gmachine.OpCMPI, 3}, want: true, description: "3 != 2, 3 == 3"},
 	}
 
 	for _, tc := range tcs {
@@ -333,10 +333,10 @@ func TestLoopWithJMPZ(t *testing.T) {
 
 	opcodes := []gmachine.Word{
 
-		gmachine.INCI,
-		gmachine.CMPI,
+		gmachine.OpINCI,
+		gmachine.OpCMPI,
 		10,
-		gmachine.JMPZ,
+		gmachine.OpJMPZ,
 		0,
 	}
 
@@ -362,7 +362,7 @@ func TestHelloWorld(t *testing.T) {
 	)
 
 	opcodes := []gmachine.Word{
-		gmachine.JUMP,
+		gmachine.OpJUMP,
 		12,
 		72,
 		101,
@@ -374,16 +374,16 @@ func TestHelloWorld(t *testing.T) {
 		114,
 		108,
 		100,
-		gmachine.SETI,
+		gmachine.OpSETI,
 		2,
-		gmachine.SETATOM,
-		gmachine.BIOS,
+		gmachine.OpSETATOM,
+		gmachine.OpBIOS,
 		gmachine.IOPWrite,
 		gmachine.SendToStdOut,
-		gmachine.INCI,
-		gmachine.CMPI,
+		gmachine.OpINCI,
+		gmachine.OpCMPI,
 		12,
-		gmachine.JMPZ,
+		gmachine.OpJMPZ,
 		14,
 	}
 
