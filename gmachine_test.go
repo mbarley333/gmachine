@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"gmachine"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestNew(t *testing.T) {
@@ -183,7 +185,7 @@ func TestBIOSWrite(t *testing.T) {
 		gmachine.OpSETA,
 		'J',
 		gmachine.OpBIOS,
-		gmachine.IOPWrite,
+		gmachine.IOWrite,
 		gmachine.SendToStdOut,
 	}
 	g.RunProgram(opcodes)
@@ -394,6 +396,39 @@ func TestHelloWorld(t *testing.T) {
 
 	if want != got {
 		t.Fatalf("want: %q, got: %q", want, got)
+	}
+
+}
+
+func TestTranslateStringToInstructions(t *testing.T) {
+	t.Parallel()
+
+	str := "INCA DECA SETA"
+
+	want := []gmachine.Instruction{
+		{Opcode: gmachine.OpINCA, Operands: 0},
+		{Opcode: gmachine.OpDECA, Operands: 0},
+		{Opcode: gmachine.OpSETA, Operands: 1},
+	}
+
+	got := gmachine.AssembleFromString(str)
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+
+}
+
+func TestAssemble(t *testing.T) {
+	t.Parallel()
+
+	code := []string{"INCA", "DECA", "72"}
+
+	want := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
+	got := gmachine.Assemble(code)
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
 	}
 
 }

@@ -2,9 +2,12 @@
 package gmachine
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
+	"strconv"
+	"strings"
 )
 
 // 6502, zeta
@@ -100,17 +103,6 @@ func WithInput(input io.Reader) Option {
 	}
 }
 
-type Instruction struct {
-	Opcode   Word
-	Operands int
-}
-
-var TranslatorMap = map[string]Instruction{
-	"HALT": {Opcode: OpSETA, Operands: 0},
-	"SETA": {Opcode: OpSETA, Operands: 1},
-	"SETA": {Opcode: OpSETA, Operands: 1},
-}
-
 // P is Program Counter
 // A is Arithmatic
 // I holds the index value of memory location
@@ -204,4 +196,54 @@ func (m *Machine) RunProgram(opcodes []Word) {
 	}
 
 	m.Run()
+}
+
+type Instruction struct {
+	Opcode   Word
+	Operands int
+}
+
+var TranslatorMap = map[string]Instruction{
+	"HALT": {Opcode: OpHALT, Operands: 0},
+	"NOOP": {Opcode: OpNOOP, Operands: 0},
+	"INCA": {Opcode: OpINCA, Operands: 0},
+	"DECA": {Opcode: OpDECA, Operands: 0},
+	"SETA": {Opcode: OpSETA, Operands: 1},
+}
+
+func AssembleFromString(codeString string) []Word {
+
+	scanner := bufio.NewScanner(strings.NewReader(codeString))
+	scanner.Split(bufio.ScanWords)
+
+	var codes []string
+	for scanner.Scan() {
+
+		codes = append(codes, scanner.Text())
+	}
+
+	words := Assemble(codes)
+
+	return words
+}
+
+func Assemble(codes []string) []Word {
+
+	var words []Word
+
+	for _, code := range codes {
+		instruction, ok := TranslatorMap[code]
+		if ok {
+			words = append(words, instruction.Opcode)
+		} else {
+			word, err := strconv.Atoi(code)
+			if err != nil {
+				fmt.Printf("%d of type %T", word, word)
+			}
+			words = append(words, Word(word))
+		}
+
+	}
+
+	return words
 }
