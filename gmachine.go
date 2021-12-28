@@ -211,7 +211,7 @@ var TranslatorMap = map[string]Instruction{
 	"SETA": {Opcode: OpSETA, Operands: 1},
 }
 
-func AssembleFromString(codeString string) []Word {
+func AssembleFromString(codeString string) ([]Word, error) {
 
 	scanner := bufio.NewScanner(strings.NewReader(codeString))
 	scanner.Split(bufio.ScanWords)
@@ -222,18 +222,31 @@ func AssembleFromString(codeString string) []Word {
 		codes = append(codes, scanner.Text())
 	}
 
-	words := Assemble(codes)
+	words, err := Assemble(codes)
+	if err != nil {
+		return nil, err
+	}
 
-	return words
+	return words, nil
 }
 
-func Assemble(codes []string) []Word {
+func Assemble(codes []string) ([]Word, error) {
 
 	var words []Word
-
-	for _, code := range codes {
+	var err error
+	for index, code := range codes {
 		instruction, ok := TranslatorMap[code]
 		if ok {
+
+			// validate instruction
+			if instruction.Operands > 0 {
+
+				err = ValidateInstructions(codes[index:index+instruction.Operands+1], instruction.Operands)
+			}
+			if err != nil {
+				return nil, err
+			}
+
 			words = append(words, instruction.Opcode)
 		} else {
 			word, err := strconv.Atoi(code)
@@ -245,5 +258,20 @@ func Assemble(codes []string) []Word {
 
 	}
 
-	return words
+	return words, nil
+}
+
+func ValidateInstructions(codes []string, operands int) error {
+
+	if len(codes)-1 < operands {
+		return fmt.Errorf("%s expects %d operand(s)", codes[0], operands)
+	}
+
+	for i := 1; i <= operands; i++ {
+		if _, ok := TranslatorMap[codes[i]]; ok {
+			return fmt.Errorf("%s was given an invalid operand: %s", codes[0], codes[i])
+		}
+	}
+
+	return nil
 }

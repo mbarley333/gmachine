@@ -400,18 +400,22 @@ func TestHelloWorld(t *testing.T) {
 
 }
 
-func TestTranslateStringToInstructions(t *testing.T) {
+func TestAssembleFromString(t *testing.T) {
 	t.Parallel()
 
-	str := "INCA DECA SETA"
+	str := "INCA DECA SETA 12"
 
-	want := []gmachine.Instruction{
-		{Opcode: gmachine.OpINCA, Operands: 0},
-		{Opcode: gmachine.OpDECA, Operands: 0},
-		{Opcode: gmachine.OpSETA, Operands: 1},
+	want := []gmachine.Word{
+		gmachine.OpINCA,
+		gmachine.OpDECA,
+		gmachine.OpSETA,
+		12,
 	}
 
-	got := gmachine.AssembleFromString(str)
+	got, err := gmachine.AssembleFromString(str)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
@@ -425,10 +429,49 @@ func TestAssemble(t *testing.T) {
 	code := []string{"INCA", "DECA", "72"}
 
 	want := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
-	got := gmachine.Assemble(code)
+	got, err := gmachine.Assemble(code)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
+	}
+
+}
+
+func TestValidateInstructions(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		codes       []string
+		ErrExpected bool
+		description string
+		operands    int
+	}
+
+	tcs := []testCase{
+		{codes: []string{"SETA", "72"}, operands: 1, ErrExpected: false, description: "expect no error"},
+		{codes: []string{"SETA"}, operands: 1, ErrExpected: true, description: "expect error"},
+		{codes: []string{"SETA", "DECA"}, operands: 1, ErrExpected: true, description: "expect error"},
+	}
+
+	want := false
+	got := false
+
+	for _, tc := range tcs {
+
+		want = tc.ErrExpected
+
+		err := gmachine.ValidateInstructions(tc.codes, tc.operands)
+		if err != nil {
+			got = true
+		}
+
+		if want != got {
+			t.Fatalf("%s want: %v, got: %v", tc.description, want, got)
+		}
+
 	}
 
 }
