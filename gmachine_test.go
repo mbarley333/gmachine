@@ -475,3 +475,21 @@ func TestValidateInstructions(t *testing.T) {
 	}
 
 }
+
+func TestWriteWords(t *testing.T) {
+	t.Parallel()
+
+	output := &bytes.Buffer{}
+
+	words := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
+
+	gmachine.WriteWords(output, words)
+
+	want := []byte{0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 72}
+	got := output.Bytes()
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+
+}
