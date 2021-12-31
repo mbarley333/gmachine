@@ -245,23 +245,20 @@ func Assemble(codes []string) ([]Word, error) {
 	for index, code := range codes {
 		instruction, ok := TranslatorMap[code]
 		if ok {
-
 			// validate instruction
 			if instruction.Operands > 0 {
-
 				err = ValidateInstructions(codes[index:index+instruction.Operands+1], instruction.Operands)
 			}
 			if err != nil {
 				return nil, err
 			}
-
 			words = append(words, instruction.Opcode)
 		} else {
-			word, err := strconv.Atoi(code)
+			data, err := AssembleData(code)
 			if err != nil {
-				fmt.Printf("%d of type %T", word, word)
+				return nil, err
 			}
-			words = append(words, Word(word))
+			words = append(words, data...)
 		}
 
 	}
@@ -291,4 +288,27 @@ func WriteWords(w io.Writer, words []Word) {
 		binary.BigEndian.PutUint64(raw, uint64(word))
 		w.Write(raw)
 	}
+}
+
+func AssembleData(token string) ([]Word, error) {
+
+	words := []Word{}
+
+	if strings.HasPrefix(token, "'") {
+		token = strings.ReplaceAll(token, "'", "")
+
+		for _, character := range token {
+			words = append(words, Word(character))
+		}
+
+	} else {
+		word, err := strconv.Atoi(token)
+		if err != nil {
+			return nil, fmt.Errorf("unable to assemble data: %q of type %T", token, word)
+		}
+		words = append(words, Word(word))
+	}
+
+	return words, nil
+
 }

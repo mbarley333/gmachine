@@ -493,3 +493,32 @@ func TestWriteWords(t *testing.T) {
 	}
 
 }
+
+func TestAssembleData(t *testing.T) {
+	t.Parallel()
+
+	text := "'HelloWorld'"
+
+	want := []gmachine.Word{
+		72,
+		101,
+		108,
+		108,
+		111,
+		87,
+		111,
+		114,
+		108,
+		100,
+	}
+
+	got, err := gmachine.AssembleData(text)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+
+}
