@@ -238,6 +238,31 @@ func AssembleFromString(codeString string) ([]Word, error) {
 	return words, nil
 }
 
+func AssembleFromFile(path string) ([]Word, error) {
+
+	// open the file
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open file: %s", err)
+	}
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanWords)
+
+	var codes []string
+	for scanner.Scan() {
+
+		codes = append(codes, scanner.Text())
+	}
+
+	words, err := Assemble(codes)
+	if err != nil {
+		return nil, err
+	}
+
+	return words, nil
+
+}
+
 func Assemble(codes []string) ([]Word, error) {
 
 	var words []Word
@@ -290,6 +315,26 @@ func WriteWords(w io.Writer, words []Word) {
 	}
 }
 
+func ReadWords(r io.Reader) []Word {
+	raw := make([]byte, 8)
+	words := []Word{}
+
+	for {
+
+		_, err := r.Read(raw)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil
+		}
+		bin := binary.BigEndian.Uint64(raw)
+		words = append(words, Word(bin))
+	}
+
+	return words
+}
+
 func AssembleData(token string) ([]Word, error) {
 
 	words := []Word{}
@@ -311,4 +356,22 @@ func AssembleData(token string) ([]Word, error) {
 
 	return words, nil
 
+}
+
+func CreateBinary(sourcePath string, targetPath string) error {
+
+	words, err := AssembleFromFile(sourcePath)
+	if err != nil {
+		return err
+	}
+
+	binaryFile, err := os.Create(targetPath)
+	if err != nil {
+		return err
+	}
+	defer binaryFile.Close()
+
+	WriteWords(binaryFile, words)
+
+	return nil
 }
