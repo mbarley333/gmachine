@@ -55,9 +55,9 @@ import (
 // could i write tests as gmachine programs -- list of tests, testing framework
 // opcode gmachine failtest
 
-const (
-	DefaultMemSize = 1024
-)
+// const (
+// 	DefaultMemSize = 1024
+// )
 
 type Word uint64
 
@@ -122,7 +122,7 @@ type Machine struct {
 func New(opts ...Option) *Machine {
 
 	machine := &Machine{
-		Memory: NewElasticMemory(),
+		Memory: ElasticMemory{},
 		output: os.Stdout,
 		input:  os.Stdin,
 	}
