@@ -112,7 +112,7 @@ type Machine struct {
 	P        Word
 	A        Word
 	I        Word
-	Memory   []Word
+	Memory   ElasticMemory
 	FlagZero bool
 
 	output io.Writer
@@ -122,7 +122,7 @@ type Machine struct {
 func New(opts ...Option) *Machine {
 
 	machine := &Machine{
-		Memory: make([]Word, DefaultMemSize),
+		Memory: NewElasticMemory(),
 		output: os.Stdout,
 		input:  os.Stdin,
 	}
@@ -194,7 +194,7 @@ func (m *Machine) Next() Word {
 func (m *Machine) RunProgram(opcodes []Word) {
 
 	for k, v := range opcodes {
-		m.Memory[k] = v
+		m.Memory[Word(k)] = v
 	}
 
 	m.Run()
