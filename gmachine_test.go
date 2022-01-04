@@ -3,7 +3,10 @@ package gmachine_test
 import (
 	"bytes"
 	"gmachine"
+	"os"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestNew(t *testing.T) {
@@ -183,7 +186,7 @@ func TestBIOSWrite(t *testing.T) {
 		gmachine.OpSETA,
 		'J',
 		gmachine.OpBIOS,
-		gmachine.IOPWrite,
+		gmachine.IOWrite,
 		gmachine.SendToStdOut,
 	}
 	g.RunProgram(opcodes)
@@ -378,7 +381,7 @@ func TestHelloWorld(t *testing.T) {
 		2,
 		gmachine.OpSETATOM,
 		gmachine.OpBIOS,
-		gmachine.IOPWrite,
+		gmachine.IOWrite,
 		gmachine.SendToStdOut,
 		gmachine.OpINCI,
 		gmachine.OpCMPI,
@@ -394,6 +397,176 @@ func TestHelloWorld(t *testing.T) {
 
 	if want != got {
 		t.Fatalf("want: %q, got: %q", want, got)
+	}
+
+}
+
+func TestValidateInstructions(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		codes       []string
+		ErrExpected bool
+		description string
+		operands    int
+	}
+
+	tcs := []testCase{
+		{codes: []string{"SETA", "72"}, operands: 1, ErrExpected: false, description: "expect no error"},
+		{codes: []string{"SETA"}, operands: 1, ErrExpected: true, description: "expect error"},
+		{codes: []string{"SETA", "DECA"}, operands: 1, ErrExpected: true, description: "expect error"},
+	}
+
+	want := false
+	got := false
+
+	for _, tc := range tcs {
+
+		want = tc.ErrExpected
+
+		err := gmachine.ValidateInstructions(tc.codes, tc.operands)
+		if err != nil {
+			got = true
+		}
+
+		if want != got {
+			t.Fatalf("%s want: %v, got: %v", tc.description, want, got)
+		}
+
+	}
+
+}
+
+func TestWriteWords(t *testing.T) {
+	t.Parallel()
+
+	output := &bytes.Buffer{}
+
+	words := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
+
+	gmachine.WriteWords(output, words)
+
+	want := []byte{0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 72}
+	got := output.Bytes()
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+
+}
+
+func TestAssembleFromString(t *testing.T) {
+	t.Parallel()
+
+	str := "INCA DECA SETA 12"
+
+	want := []gmachine.Word{
+		gmachine.OpINCA,
+		gmachine.OpDECA,
+		gmachine.OpSETA,
+		12,
+	}
+
+	got, err := gmachine.AssembleFromString(str)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+
+}
+
+func TestAssemble(t *testing.T) {
+	t.Parallel()
+
+	code := []string{"INCA", "DECA", "72"}
+
+	want := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
+	got, err := gmachine.Assemble(code)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+
+}
+
+func TestAssembleFromFile(t *testing.T) {
+	t.Parallel()
+
+	path := "testdata/testFile.gmachine"
+
+	want := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
+
+	got, err := gmachine.AssembleFromFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+
+}
+
+func TestAssembleData(t *testing.T) {
+	t.Parallel()
+
+	text := "'HelloWorld'"
+
+	want := []gmachine.Word{
+		72,
+		101,
+		108,
+		108,
+		111,
+		87,
+		111,
+		114,
+		108,
+		100,
+	}
+
+	got, err := gmachine.AssembleData(text)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+
+}
+
+func TestReadWords(t *testing.T) {
+	t.Parallel()
+
+	sourcePath := "testdata/testFile.gmachine"
+
+	targetPath := t.TempDir() + "/testFile.g"
+
+	gmachine.CreateBinary(sourcePath, targetPath)
+
+	file, err := os.Open(targetPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+
+	want := []gmachine.Word{
+		gmachine.OpINCA,
+		gmachine.OpDECA,
+		gmachine.Word(72),
+	}
+
+	got := gmachine.ReadWords(file)
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
 	}
 
 }
