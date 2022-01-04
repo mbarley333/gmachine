@@ -2,11 +2,6 @@ package gmachine
 
 type ElasticMemory map[Word]Word
 
-func NewElasticMemory() ElasticMemory {
-
-	return ElasticMemory{}
-}
-
 func (e ElasticMemory) Add(words []Word) {
 	length := len(e)
 

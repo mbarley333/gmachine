@@ -8,7 +8,7 @@ import (
 func TestElasticMemoryAdd(t *testing.T) {
 	t.Parallel()
 
-	m := gmachine.NewElasticMemory()
+	m := gmachine.ElasticMemory{}
 
 	wantInital := 0
 
