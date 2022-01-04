@@ -542,22 +542,6 @@ func TestAssembleData(t *testing.T) {
 
 }
 
-func TestCreateBinary(t *testing.T) {
-	t.Parallel()
-
-	sourcePath := "testdata/testFile.gmachine"
-
-	targetPath := t.TempDir() + "/testFile.g"
-
-	gmachine.CreateBinary(sourcePath, targetPath)
-
-	_, err := os.ReadFile(targetPath)
-	if err != nil {
-		t.Fatalf("want file %s, got %s", targetPath, err)
-	}
-
-}
-
 func TestReadWords(t *testing.T) {
 	t.Parallel()
 
