@@ -558,19 +558,31 @@ func TestCreateBinary(t *testing.T) {
 
 }
 
-// func TestReadWords(t *testing.T) {
-// 	t.Parallel()
+func TestReadWords(t *testing.T) {
+	t.Parallel()
 
-// 	program := bytes.Reader
+	sourcePath := "testdata/testFile.gmachine"
 
-// 	want := []gmachine.Word{
-// 		gmachine.OpINCA,
-// 	}
+	targetPath := t.TempDir() + "/testFile.g"
 
-// 	got := gmachine.ReadWords(r)
+	gmachine.CreateBinary(sourcePath, targetPath)
 
-// 	if !cmp.Equal(want, got) {
-// 		t.Error(cmp.Diff(want, got))
-// 	}
+	file, err := os.Open(targetPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
 
-// }
+	want := []gmachine.Word{
+		gmachine.OpINCA,
+		gmachine.OpDECA,
+		gmachine.Word(72),
+	}
+
+	got := gmachine.ReadWords(file)
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+
+}

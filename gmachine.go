@@ -306,35 +306,6 @@ func ValidateInstructions(codes []string, operands int) error {
 	return nil
 }
 
-func WriteWords(w io.Writer, words []Word) {
-
-	for _, word := range words {
-		raw := make([]byte, 8)
-		binary.BigEndian.PutUint64(raw, uint64(word))
-		w.Write(raw)
-	}
-}
-
-func ReadWords(r io.Reader) []Word {
-	raw := make([]byte, 8)
-	words := []Word{}
-
-	for {
-
-		_, err := r.Read(raw)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil
-		}
-		bin := binary.BigEndian.Uint64(raw)
-		words = append(words, Word(bin))
-	}
-
-	return words
-}
-
 func AssembleData(token string) ([]Word, error) {
 
 	words := []Word{}
@@ -358,6 +329,15 @@ func AssembleData(token string) ([]Word, error) {
 
 }
 
+func WriteWords(w io.Writer, words []Word) {
+
+	for _, word := range words {
+		raw := make([]byte, 8)
+		binary.BigEndian.PutUint64(raw, uint64(word))
+		w.Write(raw)
+	}
+}
+
 func CreateBinary(sourcePath string, targetPath string) error {
 
 	words, err := AssembleFromFile(sourcePath)
@@ -374,4 +354,24 @@ func CreateBinary(sourcePath string, targetPath string) error {
 	WriteWords(binaryFile, words)
 
 	return nil
+}
+
+func ReadWords(r io.Reader) []Word {
+	raw := make([]byte, 8)
+	words := []Word{}
+
+	for {
+
+		_, err := r.Read(raw)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil
+		}
+		bin := binary.BigEndian.Uint64(raw)
+		words = append(words, Word(bin))
+	}
+
+	return words
 }
