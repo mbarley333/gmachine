@@ -571,20 +571,6 @@ func TestReadWords(t *testing.T) {
 
 }
 
-func TestIsLabel(t *testing.T) {
-	t.Parallel()
-
-	// see if first character is alpha
-	want := true
-
-	got := gmachine.IsLabel("INCATST")
-
-	if want != got {
-		t.Fatalf("want: %v, got: %v", want, got)
-	}
-
-}
-
 func TestLabel(t *testing.T) {
 	t.Parallel()
 
@@ -607,11 +593,11 @@ func TestLabel(t *testing.T) {
 
 	g.RunProgram(words)
 
-	wantA := 1
+	wantA := gmachine.Word(1)
 
 	gotA := g.A
 
-	if want != got {
+	if wantA != gotA {
 		t.Fatalf("want: %d, got: %d", wantA, gotA)
 	}
 
