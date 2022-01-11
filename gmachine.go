@@ -62,7 +62,6 @@ type Machine struct {
 	A        Word
 	I        Word
 	Memory   ElasticMemory
-	Labels   map[Word]Word
 	FlagZero bool
 
 	output io.Writer
@@ -73,7 +72,6 @@ func New(opts ...Option) *Machine {
 
 	machine := &Machine{
 		Memory: ElasticMemory{},
-		Labels: make(map[Word]Word),
 		output: os.Stdout,
 		input:  os.Stdin,
 	}
@@ -161,6 +159,7 @@ var TranslatorMap = map[string]Instruction{
 	"INCA":    {Opcode: OpINCA, Operands: 0},
 	"DECA":    {Opcode: OpDECA, Operands: 0},
 	"SETA":    {Opcode: OpSETA, Operands: 1},
+	"SETI":    {Opcode: OpSETI, Operands: 1},
 	"BIOS":    {Opcode: OpBIOS, Operands: 2},
 	"INCI":    {Opcode: OpINCI, Operands: 0},
 	"CMPI":    {Opcode: OpCMPI, Operands: 1},
@@ -216,17 +215,24 @@ func AssembleFromFile(path string) ([]Word, error) {
 func Assemble(codes []string) ([]Word, error) {
 
 	labels := map[string]Word{}
-	refs := map[string]Word{}
+	refs := map[string][]Word{}
 
 	var words []Word
 	var err error
+
+	// first pass
 	for index, code := range codes {
 
+		// id labels
 		if strings.HasSuffix(code, ":") {
 
-			_, ok := labels[code]
+			label := strings.Replace(code, ":", "", -1)
+
+			_, ok := labels[label]
 			if !ok {
-				labels[code] = Word(index)
+				labels[label] = Word(index)
+			} else {
+				return nil, fmt.Errorf("label cannot be defined more than once: %q at word #%d", code, index)
 			}
 			continue
 		}
@@ -244,18 +250,29 @@ func Assemble(codes []string) ([]Word, error) {
 			continue
 		}
 
+		// id label references
 		if unicode.IsLetter(rune(code[0])) {
 
-			refs[code] = Word(index)
+			refs[code] = append(refs[code], Word(index))
 			words = append(words, 0)
 			continue
 		}
 
+		// assemble data
 		data, err := AssembleData(code)
 		if err != nil {
 			return nil, err
 		}
 		words = append(words, data...)
+
+	}
+
+	// second pass to populate assembly code with label address
+	for label, addresses := range refs {
+
+		for _, address := range addresses {
+			words[address] = labels[label]
+		}
 
 	}
 

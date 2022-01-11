@@ -581,6 +581,8 @@ func TestLabel(t *testing.T) {
 		gmachine.Word(3),
 		gmachine.OpHALT,
 		gmachine.OpINCA,
+		gmachine.OpJUMP,
+		gmachine.Word(2),
 	}
 
 	words, err := gmachine.AssembleFromFile(path)
@@ -596,13 +598,23 @@ func TestLabel(t *testing.T) {
 
 }
 
-// test if multiple instances of same label
-
-// test multiple references to same label
-
-func TestConstant(t *testing.T) {
+func TestDuplicateLabelDef(t *testing.T) {
 	t.Parallel()
 
-	// need to set const with opcode EQU
+	path := "testdata/testDuplicateLabelDef.gmachine"
+
+	wantError := true
+	_, err := gmachine.AssembleFromFile(path)
+
+	gotError := false
+	if err != nil {
+		gotError = true
+	}
+
+	if wantError != gotError {
+		t.Fatalf("want: %v, got %v", wantError, gotError)
+	}
 
 }
+
+// test if multiple instances of same label
