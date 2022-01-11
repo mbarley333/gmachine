@@ -74,7 +74,6 @@ const (
 	OpJUMP
 	OpJMPZ
 	OpSETATOM
-	OpJSR
 )
 
 const (
@@ -181,10 +180,7 @@ func (m *Machine) Run() {
 			if !m.FlagZero {
 				m.P = m.Next()
 			}
-		case OpJSR:
-			m.P = m.Next()
-
-		}
+	
 	}
 
 }
@@ -222,7 +218,6 @@ var TranslatorMap = map[string]Instruction{
 	"CMPI":    {Opcode: OpCMPI, Operands: 1},
 	"JUMP":    {Opcode: OpJUMP, Operands: 1},
 	"JMPZ":    {Opcode: OpJMPZ, Operands: 1},
-	"JSR":     {Opcode: OpJSR, Operands: 1},
 	"SETATOM": {Opcode: OpSETATOM, Operands: 0},
 }
 
