@@ -180,9 +180,8 @@ func (m *Machine) Run() {
 			if !m.FlagZero {
 				m.P = m.Next()
 			}
-	
+		}
 	}
-
 }
 
 func (m *Machine) Next() Word {
