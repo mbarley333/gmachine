@@ -41,18 +41,13 @@ const (
 	ReadFromStdin
 )
 
+type ElasticMemory map[Word]Word
+
 type Option func(*Machine) error
 
 func WithOutput(output io.Writer) Option {
 	return func(m *Machine) error {
 		m.output = output
-		return nil
-	}
-}
-
-func WithInput(input io.Reader) Option {
-	return func(m *Machine) error {
-		m.input = input
 		return nil
 	}
 }
@@ -65,7 +60,6 @@ type Machine struct {
 	FlagZero bool
 
 	output io.Writer
-	input  io.Reader
 }
 
 func New(opts ...Option) *Machine {
@@ -73,7 +67,6 @@ func New(opts ...Option) *Machine {
 	machine := &Machine{
 		Memory: ElasticMemory{},
 		output: os.Stdout,
-		input:  os.Stdin,
 	}
 
 	for _, o := range opts {

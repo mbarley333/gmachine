@@ -13,11 +13,7 @@ func TestNew(t *testing.T) {
 
 	t.Parallel()
 	g := gmachine.New()
-	// wantMemSize := gmachine.DefaultMemSize
-	// gotMemSize := len(g.Memory)
-	// if wantMemSize != gotMemSize {
-	// 	t.Errorf("want %d words of memory, got %d", wantMemSize, gotMemSize)
-	// }
+
 	var wantP gmachine.Word = 0
 	if wantP != g.P {
 		t.Errorf("want initial P value %d, got %d", wantP, g.P)
@@ -616,5 +612,3 @@ func TestDuplicateLabelDef(t *testing.T) {
 	}
 
 }
-
-// test if multiple instances of same label
