@@ -113,6 +113,7 @@ type Machine struct {
 	A        Word
 	I        Word
 	Memory   ElasticMemory
+	Labels   map[Word]Word
 	FlagZero bool
 
 	output io.Writer
@@ -123,6 +124,7 @@ func New(opts ...Option) *Machine {
 
 	machine := &Machine{
 		Memory: ElasticMemory{},
+		Labels: make(map[Word]Word),
 		output: os.Stdout,
 		input:  os.Stdin,
 	}
@@ -180,7 +182,6 @@ func (m *Machine) Run() {
 			}
 		}
 	}
-
 }
 
 func (m *Machine) Next() Word {
@@ -219,7 +220,7 @@ var TranslatorMap = map[string]Instruction{
 	"SETATOM": {Opcode: OpSETATOM, Operands: 0},
 }
 
-func AssembleFromString(codeString string) ([]Word, error) {
+func AssembleFromString(codeString string) ([]Word, map[string]Word, error) {
 
 	scanner := bufio.NewScanner(strings.NewReader(codeString))
 	scanner.Split(bufio.ScanWords)
@@ -230,20 +231,20 @@ func AssembleFromString(codeString string) ([]Word, error) {
 		codes = append(codes, scanner.Text())
 	}
 
-	words, err := Assemble(codes)
+	words, labels, err := Assemble(codes)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return words, nil
+	return words, labels, nil
 }
 
-func AssembleFromFile(path string) ([]Word, error) {
+func AssembleFromFile(path string) ([]Word, map[string]Word, error) {
 
 	// open the file
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open file: %s", err)
+		return nil, nil, fmt.Errorf("unable to open file: %s", err)
 	}
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanWords)
@@ -254,16 +255,18 @@ func AssembleFromFile(path string) ([]Word, error) {
 		codes = append(codes, scanner.Text())
 	}
 
-	words, err := Assemble(codes)
+	words, labels, err := Assemble(codes)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return words, nil
+	return words, labels, nil
 
 }
 
-func Assemble(codes []string) ([]Word, error) {
+func Assemble(codes []string) ([]Word, map[string]Word, error) {
+
+	labelMap := make(map[string]Word)
 
 	var words []Word
 	var err error
@@ -275,20 +278,29 @@ func Assemble(codes []string) ([]Word, error) {
 				err = ValidateInstructions(codes[index:index+instruction.Operands+1], instruction.Operands)
 			}
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			words = append(words, instruction.Opcode)
+		} else if IsLabel(code) {
+
+			_, ok := labelMap[code]
+			if !ok {
+				labelMap[code] = Word(index)
+			} else {
+				words = append(words, labelMap[code])
+			}
+
 		} else {
 			data, err := AssembleData(code)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			words = append(words, data...)
 		}
 
 	}
 
-	return words, nil
+	return words, labelMap, nil
 }
 
 func ValidateInstructions(codes []string, operands int) error {
@@ -340,7 +352,7 @@ func WriteWords(w io.Writer, words []Word) {
 
 func CreateBinary(sourcePath string, targetPath string) error {
 
-	words, err := AssembleFromFile(sourcePath)
+	words, _, err := AssembleFromFile(sourcePath)
 	if err != nil {
 		return err
 	}
@@ -365,6 +377,7 @@ func ReadWords(r io.Reader) []Word {
 		_, err := r.Read(raw)
 		if err == io.EOF {
 			break
+
 		}
 		if err != nil {
 			return nil
@@ -374,4 +387,9 @@ func ReadWords(r io.Reader) []Word {
 	}
 
 	return words
+}
+
+func IsLabel(token string) bool {
+
+	return (token[0] >= 'a' && token[0] <= 'z') || (token[0] >= 'A' && token[0] <= 'Z')
 }

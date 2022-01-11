@@ -467,7 +467,7 @@ func TestAssembleFromString(t *testing.T) {
 		12,
 	}
 
-	got, err := gmachine.AssembleFromString(str)
+	got, _, err := gmachine.AssembleFromString(str)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -484,7 +484,7 @@ func TestAssemble(t *testing.T) {
 	code := []string{"INCA", "DECA", "72"}
 
 	want := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
-	got, err := gmachine.Assemble(code)
+	got, _, err := gmachine.Assemble(code)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -502,7 +502,7 @@ func TestAssembleFromFile(t *testing.T) {
 
 	want := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
 
-	got, err := gmachine.AssembleFromFile(path)
+	got, _, err := gmachine.AssembleFromFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -567,6 +567,38 @@ func TestReadWords(t *testing.T) {
 
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
+	}
+
+}
+
+func TestLabel(t *testing.T) {
+	t.Parallel()
+
+	path := "testdata/testLabel.gmachine"
+
+	want := gmachine.Word(2)
+
+	words, label, err := gmachine.AssembleFromFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := label["TSTINCA"]
+
+	if want != got {
+		t.Fatalf("want: %v, got: %v", want, got)
+	}
+
+	g := gmachine.New()
+
+	g.RunProgram(words)
+
+	wantA := gmachine.Word(1)
+
+	gotA := g.A
+
+	if wantA != gotA {
+		t.Fatalf("want: %d, got: %d", wantA, gotA)
 	}
 
 }
