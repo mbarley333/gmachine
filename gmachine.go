@@ -9,55 +9,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"unicode"
 )
-
-// 6502, zeta
-// assembler, create a binary, executor, create arm64 binary - string matching, bufio scanner, word by word
-// opcodes with some operands vs none
-// generate
-// stack - store state, stack pointer
-// tokens - const (e.g for)
-// convert string to opcodes
-// define const - pi
-// label print
-// assembler code
-// subroutines print -
-// go tool compile -S             compile but stop - no bin
-// go tool compile -S gmachine.go | code -
-// otool -vVt main | code -
-// llvm
-// not gate, register
-// draw a triangle
-// GPU draws triangle (hardware)
-// mutex, concurrent
-// locking
-// disallow interrupt
-// stack - push/pop
-// mem fetch speed - get whole block
-// delay in memory fetch
-// cache - concurrency
-// i/o - routine, memory address 9000 - print string, std lib - BIOS, ships with the machine
-// memory mapped io - write to memory location that sends to
-// DefaultMemSize is the number of 64-bit words of memory which will be
-// allocated to a new G-machine by default.
-
-// virtual memory
-//
-// dynamic memory sizing
-// allocating more space as we go
-// 9M
-
-// layer to make app thinks it has access to machine - OS
-// stdlib, runtime
-
-// submit text instead of big array
-
-// could i write tests as gmachine programs -- list of tests, testing framework
-// opcode gmachine failtest
-
-// const (
-// 	DefaultMemSize = 1024
-// )
 
 type Word uint64
 
@@ -104,10 +57,6 @@ func WithInput(input io.Reader) Option {
 	}
 }
 
-// P is Program Counter
-// A is Arithmatic
-// I holds the index value of memory location
-// FlagZero used for loop operations and any boolean state holder
 type Machine struct {
 	P        Word
 	A        Word
@@ -220,7 +169,7 @@ var TranslatorMap = map[string]Instruction{
 	"SETATOM": {Opcode: OpSETATOM, Operands: 0},
 }
 
-func AssembleFromString(codeString string) ([]Word, map[string]Word, error) {
+func AssembleFromString(codeString string) ([]Word, error) {
 
 	scanner := bufio.NewScanner(strings.NewReader(codeString))
 	scanner.Split(bufio.ScanWords)
@@ -231,20 +180,20 @@ func AssembleFromString(codeString string) ([]Word, map[string]Word, error) {
 		codes = append(codes, scanner.Text())
 	}
 
-	words, labels, err := Assemble(codes)
+	words, err := Assemble(codes)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return words, labels, nil
+	return words, nil
 }
 
-func AssembleFromFile(path string) ([]Word, map[string]Word, error) {
+func AssembleFromFile(path string) ([]Word, error) {
 
 	// open the file
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to open file: %s", err)
+		return nil, fmt.Errorf("unable to open file: %s", err)
 	}
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanWords)
@@ -255,52 +204,62 @@ func AssembleFromFile(path string) ([]Word, map[string]Word, error) {
 		codes = append(codes, scanner.Text())
 	}
 
-	words, labels, err := Assemble(codes)
+	words, err := Assemble(codes)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return words, labels, nil
+	return words, nil
 
 }
 
-func Assemble(codes []string) ([]Word, map[string]Word, error) {
+func Assemble(codes []string) ([]Word, error) {
 
-	labelMap := make(map[string]Word)
+	labels := map[string]Word{}
+	refs := map[string]Word{}
 
 	var words []Word
 	var err error
 	for index, code := range codes {
+
+		if strings.HasSuffix(code, ":") {
+
+			_, ok := labels[code]
+			if !ok {
+				labels[code] = Word(index)
+			}
+			continue
+		}
+
 		instruction, ok := TranslatorMap[code]
 		if ok {
-			// validate instruction
+
 			if instruction.Operands > 0 {
 				err = ValidateInstructions(codes[index:index+instruction.Operands+1], instruction.Operands)
 			}
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 			words = append(words, instruction.Opcode)
-		} else if IsLabel(code) {
-
-			_, ok := labelMap[code]
-			if !ok {
-				labelMap[code] = Word(index)
-			} else {
-				words = append(words, labelMap[code])
-			}
-
-		} else {
-			data, err := AssembleData(code)
-			if err != nil {
-				return nil, nil, err
-			}
-			words = append(words, data...)
+			continue
 		}
+
+		if unicode.IsLetter(rune(code[0])) {
+
+			refs[code] = Word(index)
+			words = append(words, 0)
+			continue
+		}
+
+		data, err := AssembleData(code)
+		if err != nil {
+			return nil, err
+		}
+		words = append(words, data...)
 
 	}
 
-	return words, labelMap, nil
+	return words, nil
 }
 
 func ValidateInstructions(codes []string, operands int) error {
@@ -352,7 +311,7 @@ func WriteWords(w io.Writer, words []Word) {
 
 func CreateBinary(sourcePath string, targetPath string) error {
 
-	words, _, err := AssembleFromFile(sourcePath)
+	words, err := AssembleFromFile(sourcePath)
 	if err != nil {
 		return err
 	}
@@ -389,7 +348,53 @@ func ReadWords(r io.Reader) []Word {
 	return words
 }
 
-func IsLabel(token string) bool {
+// label ends with :
+//
 
-	return (token[0] >= 'a' && token[0] <= 'z') || (token[0] >= 'A' && token[0] <= 'Z')
-}
+// 6502, zeta
+// assembler, create a binary, executor, create arm64 binary - string matching, bufio scanner, word by word
+// opcodes with some operands vs none
+// generate
+// stack - store state, stack pointer
+// tokens - const (e.g for)
+// convert string to opcodes
+// define const - pi
+// label print
+// assembler code
+// subroutines print -
+// go tool compile -S             compile but stop - no bin
+// go tool compile -S gmachine.go | code -
+// otool -vVt main | code -
+// llvm
+// not gate, register
+// draw a triangle
+// GPU draws triangle (hardware)
+// mutex, concurrent
+// locking
+// disallow interrupt
+// stack - push/pop
+// mem fetch speed - get whole block
+// delay in memory fetch
+// cache - concurrency
+// i/o - routine, memory address 9000 - print string, std lib - BIOS, ships with the machine
+// memory mapped io - write to memory location that sends to
+// DefaultMemSize is the number of 64-bit words of memory which will be
+// allocated to a new G-machine by default.
+
+// virtual memory
+//
+// dynamic memory sizing
+// allocating more space as we go
+// 9M
+
+// layer to make app thinks it has access to machine - OS
+// stdlib, runtime
+
+// submit text instead of big array
+
+// could i write tests as gmachine programs -- list of tests, testing framework
+// opcode gmachine failtest
+
+// const (
+// 	DefaultMemSize = 1024
+// )

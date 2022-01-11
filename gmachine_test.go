@@ -467,7 +467,7 @@ func TestAssembleFromString(t *testing.T) {
 		12,
 	}
 
-	got, _, err := gmachine.AssembleFromString(str)
+	got, err := gmachine.AssembleFromString(str)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -484,7 +484,7 @@ func TestAssemble(t *testing.T) {
 	code := []string{"INCA", "DECA", "72"}
 
 	want := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
-	got, _, err := gmachine.Assemble(code)
+	got, err := gmachine.Assemble(code)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -502,7 +502,7 @@ func TestAssembleFromFile(t *testing.T) {
 
 	want := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
 
-	got, _, err := gmachine.AssembleFromFile(path)
+	got, err := gmachine.AssembleFromFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -576,29 +576,33 @@ func TestLabel(t *testing.T) {
 
 	path := "testdata/testLabel.gmachine"
 
-	want := gmachine.Word(2)
+	want := []gmachine.Word{
+		gmachine.OpJUMP,
+		gmachine.Word(3),
+		gmachine.OpHALT,
+		gmachine.OpINCA,
+	}
 
-	words, label, err := gmachine.AssembleFromFile(path)
+	words, err := gmachine.AssembleFromFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	got := label["TSTINCA"]
+	got := words
 
-	if want != got {
-		t.Fatalf("want: %v, got: %v", want, got)
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
 	}
 
-	g := gmachine.New()
+}
 
-	g.RunProgram(words)
+// test if multiple instances of same label
 
-	wantA := gmachine.Word(1)
+// test multiple references to same label
 
-	gotA := g.A
+func TestConstant(t *testing.T) {
+	t.Parallel()
 
-	if wantA != gotA {
-		t.Fatalf("want: %d, got: %d", wantA, gotA)
-	}
+	// need to set const with opcode EQU
 
 }
