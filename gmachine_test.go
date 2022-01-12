@@ -613,20 +613,83 @@ func TestDuplicateLabelDef(t *testing.T) {
 
 }
 
-func TestPrintLabel(t *testing.T) {
+func TestStack(t *testing.T) {
+	t.Parallel()
 
-	output := &bytes.Buffer{}
+	s := gmachine.Stack{}
 
-	g := gmachine.New(
-		gmachine.WithOutput(output),
-	)
+	// need a stack to track jump starting point
+	want := 0
 
-	want := "TestPrint!"
-
-	got := output.String()
+	got := len(s)
 
 	if want != got {
-		t.Fatalf("want: %q, got:%q", want, got)
+		t.Fatalf("want: %d, got%d", want, got)
 	}
 
+	s.Push(gmachine.Word(1))
+
+	wantPush := 1
+
+	gotPush := len(s)
+
+	if wantPush != gotPush {
+		t.Fatalf("TestPush want: %d, got%d", wantPush, gotPush)
+	}
+
+	wantPop := gmachine.Word(1)
+
+	gotPop, err := s.Pop()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if wantPop != gotPop {
+		t.Fatalf("TestPop want: %d, got:%d", wantPop, gotPop)
+	}
+
+}
+
+func TestJSR(t *testing.T) {
+	t.Parallel()
+
+	g := gmachine.New()
+
+	opcodes := "JSR LABEL NOOP LABEL: INCA"
+
+	words, err := gmachine.AssembleFromString(opcodes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := gmachine.Word(1)
+
+	g.RunProgram(words)
+	got := g.A
+
+	if want != got {
+		t.Fatalf("want:%d, got:%d", want, got)
+	}
+}
+
+func TestRTS(t *testing.T) {
+	t.Parallel()
+
+	g := gmachine.New()
+
+	opcodes := "JSR LABEL INCA HALT LABEL: INCA RTS"
+
+	words, err := gmachine.AssembleFromString(opcodes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := gmachine.Word(2)
+
+	g.RunProgram(words)
+	got := g.A
+
+	if want != got {
+		t.Fatalf("want:%d, got:%d", want, got)
+	}
 }

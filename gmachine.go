@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -26,6 +27,8 @@ const (
 	OpJUMP
 	OpJMPZ
 	OpSETATOM
+	OpJSR
+	OpRTS
 )
 
 const (
@@ -64,6 +67,7 @@ type Machine struct {
 	I        Word
 	Memory   ElasticMemory
 	FlagZero bool
+	Stack    Stack
 
 	output io.Writer
 	debug  bool
@@ -73,6 +77,7 @@ func New(opts ...Option) *Machine {
 
 	machine := &Machine{
 		Memory: ElasticMemory{},
+		Stack:  []Word{},
 		output: os.Stdout,
 	}
 
@@ -84,6 +89,8 @@ func New(opts ...Option) *Machine {
 }
 
 func (m *Machine) Run() {
+
+	var err error
 
 	for {
 
@@ -127,6 +134,14 @@ func (m *Machine) Run() {
 			if !m.FlagZero {
 				m.P = m.Next()
 			}
+		case OpJSR:
+			m.Stack.Push(m.P)
+			m.P = m.Next()
+		case OpRTS:
+			m.P, err = m.Stack.Pop()
+			if err != nil {
+				fmt.Fprintf(m.output, "error with RTS, %s", err)
+			}
 		}
 	}
 }
@@ -166,6 +181,27 @@ var TranslatorMap = map[string]Instruction{
 	"JUMP":    {Opcode: OpJUMP, Operands: 1},
 	"JMPZ":    {Opcode: OpJMPZ, Operands: 1},
 	"SETATOM": {Opcode: OpSETATOM, Operands: 0},
+	"JSR":     {Opcode: OpJSR, Operands: 1},
+	"RTS":     {Opcode: OpRTS, Operands: 0},
+}
+
+type Stack []Word
+
+func (s *Stack) Push(word Word) {
+	*s = append(*s, word)
+
+}
+
+func (s *Stack) Pop() (Word, error) {
+	if len(*s) == 0 {
+		return 0, fmt.Errorf("no values in stack.  cannot pop until a value is added to stack")
+	}
+
+	last := len(*s) - 1
+	value := (*s)[last]
+	*s = (*s)[:last]
+
+	return value, nil
 }
 
 func AssembleFromString(codeString string) ([]Word, error) {
@@ -300,8 +336,16 @@ func AssembleData(token string) ([]Word, error) {
 
 	token = strings.ReplaceAll(token, "#", "")
 
-	for _, character := range token {
-		words = append(words, Word(character))
+	if unicode.IsLetter(rune(token[0])) {
+		for _, character := range token {
+			words = append(words, Word(character))
+		}
+	} else if unicode.IsNumber(rune(token[0])) {
+		num, err := strconv.Atoi(token)
+		if err != nil {
+			return nil, fmt.Errorf("unable to assemble data, %s", err)
+		}
+		words = append(words, Word(num))
 	}
 
 	return words, nil
