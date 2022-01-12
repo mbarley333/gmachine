@@ -13,11 +13,7 @@ func TestNew(t *testing.T) {
 
 	t.Parallel()
 	g := gmachine.New()
-	// wantMemSize := gmachine.DefaultMemSize
-	// gotMemSize := len(g.Memory)
-	// if wantMemSize != gotMemSize {
-	// 	t.Errorf("want %d words of memory, got %d", wantMemSize, gotMemSize)
-	// }
+
 	var wantP gmachine.Word = 0
 	if wantP != g.P {
 		t.Errorf("want initial P value %d, got %d", wantP, g.P)
@@ -467,7 +463,7 @@ func TestAssembleFromString(t *testing.T) {
 		12,
 	}
 
-	got, _, err := gmachine.AssembleFromString(str)
+	got, err := gmachine.AssembleFromString(str)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -481,10 +477,10 @@ func TestAssembleFromString(t *testing.T) {
 func TestAssemble(t *testing.T) {
 	t.Parallel()
 
-	code := []string{"INCA", "DECA", "72"}
+	code := []string{"INCA", "DECA", "#72"}
 
 	want := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
-	got, _, err := gmachine.Assemble(code)
+	got, err := gmachine.Assemble(code)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -502,7 +498,7 @@ func TestAssembleFromFile(t *testing.T) {
 
 	want := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
 
-	got, _, err := gmachine.AssembleFromFile(path)
+	got, err := gmachine.AssembleFromFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -516,7 +512,7 @@ func TestAssembleFromFile(t *testing.T) {
 func TestAssembleData(t *testing.T) {
 	t.Parallel()
 
-	text := "'HelloWorld'"
+	text := "#HelloWorld"
 
 	want := []gmachine.Word{
 		72,
@@ -576,29 +572,124 @@ func TestLabel(t *testing.T) {
 
 	path := "testdata/testLabel.gmachine"
 
-	want := gmachine.Word(2)
+	want := []gmachine.Word{
+		gmachine.OpJUMP,
+		gmachine.Word(3),
+		gmachine.OpHALT,
+		gmachine.OpINCA,
+		gmachine.OpJUMP,
+		gmachine.Word(2),
+	}
 
-	words, label, err := gmachine.AssembleFromFile(path)
+	words, err := gmachine.AssembleFromFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	got := label["TSTINCA"]
+	got := words
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+
+}
+
+func TestDuplicateLabelDef(t *testing.T) {
+	t.Parallel()
+
+	path := "testdata/testDuplicateLabelDef.gmachine"
+
+	wantError := true
+	_, err := gmachine.AssembleFromFile(path)
+
+	gotError := false
+	if err != nil {
+		gotError = true
+	}
+
+	if wantError != gotError {
+		t.Fatalf("want: %v, got %v", wantError, gotError)
+	}
+
+}
+
+func TestStack(t *testing.T) {
+	t.Parallel()
+
+	s := gmachine.Stack{}
+
+	// need a stack to track jump starting point
+	want := 0
+
+	got := len(s)
 
 	if want != got {
-		t.Fatalf("want: %v, got: %v", want, got)
+		t.Fatalf("want: %d, got%d", want, got)
 	}
+
+	s.Push(gmachine.Word(1))
+
+	wantPush := 1
+
+	gotPush := len(s)
+
+	if wantPush != gotPush {
+		t.Fatalf("TestPush want: %d, got%d", wantPush, gotPush)
+	}
+
+	wantPop := gmachine.Word(1)
+
+	gotPop, err := s.Pop()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if wantPop != gotPop {
+		t.Fatalf("TestPop want: %d, got:%d", wantPop, gotPop)
+	}
+
+}
+
+func TestJSR(t *testing.T) {
+	t.Parallel()
 
 	g := gmachine.New()
 
-	g.RunProgram(words)
+	opcodes := "JSR LABEL NOOP LABEL: INCA"
 
-	wantA := gmachine.Word(1)
-
-	gotA := g.A
-
-	if wantA != gotA {
-		t.Fatalf("want: %d, got: %d", wantA, gotA)
+	words, err := gmachine.AssembleFromString(opcodes)
+	if err != nil {
+		t.Fatal(err)
 	}
 
+	want := gmachine.Word(1)
+
+	g.RunProgram(words)
+	got := g.A
+
+	if want != got {
+		t.Fatalf("want:%d, got:%d", want, got)
+	}
+}
+
+func TestRTS(t *testing.T) {
+	t.Parallel()
+
+	g := gmachine.New()
+
+	opcodes := "JSR LABEL INCA HALT LABEL: INCA RTS"
+
+	words, err := gmachine.AssembleFromString(opcodes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := gmachine.Word(2)
+
+	g.RunProgram(words)
+	got := g.A
+
+	if want != got {
+		t.Fatalf("want:%d, got:%d", want, got)
+	}
 }
