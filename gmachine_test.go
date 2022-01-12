@@ -675,7 +675,9 @@ func TestJSR(t *testing.T) {
 func TestRTS(t *testing.T) {
 	t.Parallel()
 
-	g := gmachine.New()
+	g := gmachine.New(
+		gmachine.WithDebug(),
+	)
 
 	opcodes := "JSR LABEL INCA HALT LABEL: INCA RTS"
 

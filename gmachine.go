@@ -77,7 +77,6 @@ func New(opts ...Option) *Machine {
 
 	machine := &Machine{
 		Memory: ElasticMemory{},
-		Stack:  []Word{},
 		output: os.Stdout,
 	}
 
@@ -93,6 +92,10 @@ func (m *Machine) Run() {
 	var err error
 
 	for {
+
+		if m.debug {
+			fmt.Fprintln(m.output, m.String())
+		}
 
 		opcode := m.Memory[m.P]
 		m.P++
@@ -161,6 +164,11 @@ func (m *Machine) RunProgram(words []Word) {
 	}
 
 	m.Run()
+}
+
+func (m *Machine) String() string {
+
+	return fmt.Sprintf("Registers: P=%d, A=%d, I=%d\nMemory: %v\nStack: %v\n", m.P, m.A, m.I, m.Memory, m.Stack)
 }
 
 type Instruction struct {
