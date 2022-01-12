@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 	"unicode"
 )
@@ -52,6 +51,13 @@ func WithOutput(output io.Writer) Option {
 	}
 }
 
+func WithDebug() Option {
+	return func(m *Machine) error {
+		m.debug = true
+		return nil
+	}
+}
+
 type Machine struct {
 	P        Word
 	A        Word
@@ -60,6 +66,7 @@ type Machine struct {
 	FlagZero bool
 
 	output io.Writer
+	debug  bool
 }
 
 func New(opts ...Option) *Machine {
@@ -132,9 +139,9 @@ func (m *Machine) Next() Word {
 	return m.Memory[location]
 }
 
-func (m *Machine) RunProgram(opcodes []Word) {
+func (m *Machine) RunProgram(words []Word) {
 
-	for k, v := range opcodes {
+	for k, v := range words {
 		m.Memory[Word(k)] = v
 	}
 
@@ -219,7 +226,7 @@ func Assemble(codes []string) ([]Word, error) {
 		// id labels
 		if strings.HasSuffix(code, ":") {
 
-			label := strings.Replace(code, ":", "", -1)
+			label := strings.ReplaceAll(code, ":", "")
 
 			_, ok := labels[label]
 			if !ok {
@@ -291,23 +298,13 @@ func AssembleData(token string) ([]Word, error) {
 
 	words := []Word{}
 
-	if strings.HasPrefix(token, "'") {
-		token = strings.ReplaceAll(token, "'", "")
+	token = strings.ReplaceAll(token, "#", "")
 
-		for _, character := range token {
-			words = append(words, Word(character))
-		}
-
-	} else {
-		word, err := strconv.Atoi(token)
-		if err != nil {
-			return nil, fmt.Errorf("unable to assemble data: %q of type %T", token, word)
-		}
-		words = append(words, Word(word))
+	for _, character := range token {
+		words = append(words, Word(character))
 	}
 
 	return words, nil
-
 }
 
 func WriteWords(w io.Writer, words []Word) {
@@ -357,9 +354,6 @@ func ReadWords(r io.Reader) []Word {
 
 	return words
 }
-
-// label ends with :
-//
 
 // 6502, zeta
 // assembler, create a binary, executor, create arm64 binary - string matching, bufio scanner, word by word

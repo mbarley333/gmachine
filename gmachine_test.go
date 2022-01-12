@@ -477,7 +477,7 @@ func TestAssembleFromString(t *testing.T) {
 func TestAssemble(t *testing.T) {
 	t.Parallel()
 
-	code := []string{"INCA", "DECA", "72"}
+	code := []string{"INCA", "DECA", "#72"}
 
 	want := []gmachine.Word{gmachine.OpINCA, gmachine.OpDECA, gmachine.Word(72)}
 	got, err := gmachine.Assemble(code)
@@ -512,7 +512,7 @@ func TestAssembleFromFile(t *testing.T) {
 func TestAssembleData(t *testing.T) {
 	t.Parallel()
 
-	text := "'HelloWorld'"
+	text := "#HelloWorld"
 
 	want := []gmachine.Word{
 		72,
@@ -609,6 +609,24 @@ func TestDuplicateLabelDef(t *testing.T) {
 
 	if wantError != gotError {
 		t.Fatalf("want: %v, got %v", wantError, gotError)
+	}
+
+}
+
+func TestPrintLabel(t *testing.T) {
+
+	output := &bytes.Buffer{}
+
+	g := gmachine.New(
+		gmachine.WithOutput(output),
+	)
+
+	want := "TestPrint!"
+
+	got := output.String()
+
+	if want != got {
+		t.Fatalf("want: %q, got:%q", want, got)
 	}
 
 }
