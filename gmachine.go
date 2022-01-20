@@ -14,35 +14,6 @@ import (
 
 type Word uint64
 
-const (
-	OpHALT = iota
-	OpNOOP
-	OpINCA
-	OpDECA
-	OpSETA
-	OpBIOS
-	OpSETI
-	OpINCI
-	OpCMPI
-	OpJUMP
-	OpJMPZ
-	OpSETATOM
-	OpJSR
-	OpRTS
-)
-
-const (
-	IONone = iota
-	IOWrite
-	IORead
-)
-
-const (
-	SendToNone = iota
-	SendToStdOut
-	ReadFromStdin
-)
-
 type ElasticMemory map[Word]Word
 
 type Option func(*Machine) error
@@ -94,7 +65,7 @@ func (m *Machine) Run() {
 	for {
 
 		if m.debug {
-			fmt.Fprintln(m.output, m.String())
+			fmt.Fprintln(m.output, m.DebugString())
 		}
 
 		opcode := m.Memory[m.P]
@@ -166,7 +137,7 @@ func (m *Machine) RunProgram(words []Word) {
 	m.Run()
 }
 
-func (m *Machine) String() string {
+func (m *Machine) DebugString() string {
 
 	return fmt.Sprintf("Registers: P=%d, A=%d, I=%d\nMemory: %v\nStack: %v\n", m.P, m.A, m.I, m.Memory, m.Stack)
 }
