@@ -2,6 +2,7 @@ package gmachine_test
 
 import (
 	"gmachine"
+	"strings"
 	"testing"
 )
 
@@ -36,14 +37,16 @@ func TestState(t *testing.T) {
 		},
 	}
 
-	s := gmachine.NewStatemachine()
+	tm := gmachine.NewTokenizer()
 
 	gotError := false
 	for _, tc := range tcs {
 
-		strs := s.Scanner(tc.text)
+		reader := strings.NewReader(tc.text)
 
-		err := s.Tokenize(strs)
+		strs := tm.Scanner(reader)
+
+		err := tm.Tokenize(strs)
 		if err != nil {
 			gotError = true
 		}

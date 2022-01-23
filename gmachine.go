@@ -2,7 +2,6 @@
 package gmachine
 
 import (
-	"bufio"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -161,18 +160,15 @@ func (s *Stack) Pop() (Word, error) {
 	return value, nil
 }
 
-func AssembleFromString(codeString string) ([]Word, error) {
+func AssembleFromString(text string) ([]Word, error) {
 
-	scanner := bufio.NewScanner(strings.NewReader(codeString))
-	scanner.Split(bufio.ScanWords)
+	reader := strings.NewReader(text)
 
-	var codes []string
-	for scanner.Scan() {
+	t := NewTokenizer()
 
-		codes = append(codes, scanner.Text())
-	}
+	strs := t.Scanner(reader)
 
-	words, err := Assemble(codes)
+	words, err := Assemble(strs)
 	if err != nil {
 		return nil, err
 	}
@@ -182,21 +178,17 @@ func AssembleFromString(codeString string) ([]Word, error) {
 
 func AssembleFromFile(path string) ([]Word, error) {
 
-	// open the file
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open file: %s", err)
 	}
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanWords)
+	defer file.Close()
 
-	var codes []string
-	for scanner.Scan() {
+	t := NewTokenizer()
 
-		codes = append(codes, scanner.Text())
-	}
+	strs := t.Scanner(file)
 
-	words, err := Assemble(codes)
+	words, err := Assemble(strs)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +203,6 @@ func Assemble(codes []string) ([]Word, error) {
 	refs := map[string][]Word{}
 
 	var words []Word
-	var err error
 
 	// first pass
 	for index, code := range codes {
@@ -220,25 +211,13 @@ func Assemble(codes []string) ([]Word, error) {
 		if strings.HasSuffix(code, ":") {
 
 			label := strings.ReplaceAll(code, ":", "")
-
-			_, ok := labels[label]
-			if !ok {
-				labels[label] = Word(index)
-			} else {
-				return nil, fmt.Errorf("label cannot be defined more than once: %q at word #%d", code, index)
-			}
+			labels[label] = Word(index)
 			continue
 		}
 
 		instruction, ok := TranslatorMap[code]
 		if ok {
 
-			if instruction.Operands > 0 {
-				err = ValidateInstructions(codes[index:index+instruction.Operands+1], instruction.Operands)
-			}
-			if err != nil {
-				return nil, err
-			}
 			words = append(words, instruction.Opcode)
 			continue
 		}
@@ -252,7 +231,6 @@ func Assemble(codes []string) ([]Word, error) {
 
 		// id label references
 		if unicode.IsLetter(rune(code[0])) {
-
 			refs[code] = append(refs[code], Word(index))
 			words = append(words, 0)
 			continue
@@ -276,21 +254,6 @@ func Assemble(codes []string) ([]Word, error) {
 	}
 
 	return words, nil
-}
-
-func ValidateInstructions(codes []string, operands int) error {
-
-	if len(codes)-1 < operands {
-		return fmt.Errorf("%s expects %d operand(s)", codes[0], operands)
-	}
-
-	for i := 1; i <= operands; i++ {
-		if _, ok := TranslatorMap[codes[i]]; ok {
-			return fmt.Errorf("%s was given an invalid operand: %s", codes[0], codes[i])
-		}
-	}
-
-	return nil
 }
 
 func AssembleData(token string) ([]Word, error) {

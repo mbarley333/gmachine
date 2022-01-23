@@ -3,6 +3,7 @@ package gmachine
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -22,9 +23,9 @@ func NewTokenizer() *Tokenizer {
 	return s
 }
 
-func (t Tokenizer) Scanner(text string) []string {
+func (t Tokenizer) Scanner(r io.Reader) []string {
 
-	scanner := bufio.NewScanner(strings.NewReader(text))
+	scanner := bufio.NewScanner(r)
 	scanner.Split(bufio.ScanWords)
 
 	var strs []string

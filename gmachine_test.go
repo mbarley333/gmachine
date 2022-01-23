@@ -121,41 +121,41 @@ func TestHelloWorld(t *testing.T) {
 
 }
 
-func TestValidateInstructions(t *testing.T) {
-	t.Parallel()
+// func TestValidateInstructions(t *testing.T) {
+// 	t.Parallel()
 
-	type testCase struct {
-		codes       []string
-		ErrExpected bool
-		description string
-		operands    int
-	}
+// 	type testCase struct {
+// 		codes       []string
+// 		ErrExpected bool
+// 		description string
+// 		operands    int
+// 	}
 
-	tcs := []testCase{
-		{codes: []string{"SETA", "72"}, operands: 1, ErrExpected: false, description: "expect no error"},
-		{codes: []string{"SETA"}, operands: 1, ErrExpected: true, description: "expect error"},
-		{codes: []string{"SETA", "DECA"}, operands: 1, ErrExpected: true, description: "expect error"},
-	}
+// 	tcs := []testCase{
+// 		{codes: []string{"SETA", "72"}, operands: 1, ErrExpected: false, description: "expect no error"},
+// 		{codes: []string{"SETA"}, operands: 1, ErrExpected: true, description: "expect error"},
+// 		{codes: []string{"SETA", "DECA"}, operands: 1, ErrExpected: true, description: "expect error"},
+// 	}
 
-	want := false
-	got := false
+// 	want := false
+// 	got := false
 
-	for _, tc := range tcs {
+// 	for _, tc := range tcs {
 
-		want = tc.ErrExpected
+// 		want = tc.ErrExpected
 
-		err := gmachine.ValidateInstructions(tc.codes, tc.operands)
-		if err != nil {
-			got = true
-		}
+// 		err := gmachine.ValidateInstructions(tc.codes, tc.operands)
+// 		if err != nil {
+// 			got = true
+// 		}
 
-		if want != got {
-			t.Fatalf("%s want: %v, got: %v", tc.description, want, got)
-		}
+// 		if want != got {
+// 			t.Fatalf("%s want: %v, got: %v", tc.description, want, got)
+// 		}
 
-	}
+// 	}
 
-}
+// }
 
 func TestWriteWords(t *testing.T) {
 	t.Parallel()
