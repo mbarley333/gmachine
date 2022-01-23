@@ -8,21 +8,21 @@ import (
 
 type StateFunc func(string) error
 
-type Statemachine struct {
+type Tokenizer struct {
 	State        StateFunc
 	OperandCount int
 	LabelMap     map[string]bool
 }
 
-func NewStatemachine() *Statemachine {
-	s := &Statemachine{
+func NewTokenizer() *Tokenizer {
+	s := &Tokenizer{
 		LabelMap: map[string]bool{},
 	}
 
 	return s
 }
 
-func (s Statemachine) Scanner(text string) []string {
+func (t Tokenizer) Scanner(text string) []string {
 
 	scanner := bufio.NewScanner(strings.NewReader(text))
 	scanner.Split(bufio.ScanWords)
@@ -36,7 +36,7 @@ func (s Statemachine) Scanner(text string) []string {
 	return strs
 }
 
-func (s *Statemachine) StateOperand(str string) error {
+func (t *Tokenizer) StateOperand(str string) error {
 
 	_, okOpCode := TranslatorMap[str]
 	if okOpCode {
@@ -51,29 +51,29 @@ func (s *Statemachine) StateOperand(str string) error {
 		return fmt.Errorf("expecting operand, got #string: %s", str)
 	}
 
-	s.OperandCount -= 1
+	t.OperandCount -= 1
 
 	return nil
 
 }
 
-func (s Statemachine) StateOpCode(str string) error {
+func (t Tokenizer) StateOpCode(str string) error {
 	return nil
 }
 
-func (s *Statemachine) StateLabel(str string) error {
-	_, ok := s.LabelMap[str]
+func (t *Tokenizer) StateLabel(str string) error {
+	_, ok := t.LabelMap[str]
 
 	if ok {
 		return fmt.Errorf("multiple label definition for: %s", str)
 	} else {
-		s.LabelMap[str] = true
+		t.LabelMap[str] = true
 	}
 	return nil
 
 }
 
-func (s *Statemachine) Tokenize(strs []string) error {
+func (t *Tokenizer) Tokenize(strs []string) error {
 
 	if len(strs) == 0 {
 		return fmt.Errorf("unable to Tokenize zero length slice")
@@ -84,16 +84,16 @@ func (s *Statemachine) Tokenize(strs []string) error {
 		result, opCodeOk := TranslatorMap[str]
 
 		switch {
-		case s.OperandCount > 0:
-			s.State = s.StateOperand
+		case t.OperandCount > 0:
+			t.State = t.StateOperand
 		case opCodeOk:
-			s.State = s.StateOpCode
-			s.OperandCount = result.Operands
+			t.State = t.StateOpCode
+			t.OperandCount = result.Operands
 		case isLabel(str):
-			s.State = s.StateLabel
+			t.State = t.StateLabel
 		}
 
-		err := s.State(str)
+		err := t.State(str)
 		if err != nil {
 			return err
 		}
