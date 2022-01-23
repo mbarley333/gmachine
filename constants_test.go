@@ -115,12 +115,11 @@ func TestBIOSWrite(t *testing.T) {
 		gmachine.WithOutput(output),
 	)
 
-	opcodes := []gmachine.Word{
-		gmachine.OpSETA,
-		'J',
-		gmachine.OpBIOS,
-		gmachine.IOWrite,
-		gmachine.SendToStdOut,
+	str := "SETA #J BIOS IOWrite SendToStdOut"
+
+	opcodes, err := gmachine.AssembleFromString(str)
+	if err != nil {
+		t.Fatal(err)
 	}
 	g.RunProgram(opcodes)
 

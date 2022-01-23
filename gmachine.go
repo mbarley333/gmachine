@@ -142,28 +142,6 @@ func (m *Machine) DebugString() string {
 	return fmt.Sprintf("Registers: P=%d, A=%d, I=%d\nMemory: %v\nStack: %v\n", m.P, m.A, m.I, m.Memory, m.Stack)
 }
 
-type Instruction struct {
-	Opcode   Word
-	Operands int
-}
-
-var TranslatorMap = map[string]Instruction{
-	"HALT":    {Opcode: OpHALT, Operands: 0},
-	"NOOP":    {Opcode: OpNOOP, Operands: 0},
-	"INCA":    {Opcode: OpINCA, Operands: 0},
-	"DECA":    {Opcode: OpDECA, Operands: 0},
-	"SETA":    {Opcode: OpSETA, Operands: 1},
-	"SETI":    {Opcode: OpSETI, Operands: 1},
-	"BIOS":    {Opcode: OpBIOS, Operands: 2},
-	"INCI":    {Opcode: OpINCI, Operands: 0},
-	"CMPI":    {Opcode: OpCMPI, Operands: 1},
-	"JUMP":    {Opcode: OpJUMP, Operands: 1},
-	"JMPZ":    {Opcode: OpJMPZ, Operands: 1},
-	"SETATOM": {Opcode: OpSETATOM, Operands: 0},
-	"JSR":     {Opcode: OpJSR, Operands: 1},
-	"RTS":     {Opcode: OpRTS, Operands: 0},
-}
-
 type Stack []Word
 
 func (s *Stack) Push(word Word) {
@@ -265,6 +243,13 @@ func Assemble(codes []string) ([]Word, error) {
 			continue
 		}
 
+		inputOutput, ok := IOMap[code]
+		if ok {
+
+			words = append(words, Word(inputOutput))
+			continue
+		}
+
 		// id label references
 		if unicode.IsLetter(rune(code[0])) {
 
@@ -288,7 +273,6 @@ func Assemble(codes []string) ([]Word, error) {
 		for _, address := range addresses {
 			words[address] = labels[label]
 		}
-
 	}
 
 	return words, nil

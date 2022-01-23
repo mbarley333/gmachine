@@ -86,32 +86,6 @@ func TestRunProgram(t *testing.T) {
 
 }
 
-func TestLoopWithJMPZ(t *testing.T) {
-
-	t.Parallel()
-
-	g := gmachine.New()
-
-	opcodes := []gmachine.Word{
-
-		gmachine.OpINCI,
-		gmachine.OpCMPI,
-		10,
-		gmachine.OpJMPZ,
-		0,
-	}
-
-	g.RunProgram(opcodes)
-
-	want := gmachine.Word(10)
-	got := g.I
-
-	if want != got {
-		t.Fatalf("want: %d, got: %d", want, got)
-	}
-
-}
-
 func TestHelloWorld(t *testing.T) {
 
 	t.Parallel()
@@ -122,30 +96,18 @@ func TestHelloWorld(t *testing.T) {
 		gmachine.WithOutput(output),
 	)
 
-	opcodes := []gmachine.Word{
-		gmachine.OpJUMP,
-		12,
-		72,
-		101,
-		108,
-		108,
-		111,
-		87,
-		111,
-		114,
-		108,
-		100,
-		gmachine.OpSETI,
-		2,
-		gmachine.OpSETATOM,
-		gmachine.OpBIOS,
-		gmachine.IOWrite,
-		gmachine.SendToStdOut,
-		gmachine.OpINCI,
-		gmachine.OpCMPI,
-		12,
-		gmachine.OpJMPZ,
-		14,
+	str := `JUMP 12 
+	#HelloWorld
+	SETI 2
+	SETATOM
+	BIOS IOWrite SendToStdOut
+	INCI 
+	CMPI 12
+	JMPZ 14`
+
+	opcodes, err := gmachine.AssembleFromString(str)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	g.RunProgram(opcodes)
@@ -216,7 +178,9 @@ func TestWriteWords(t *testing.T) {
 func TestAssembleFromString(t *testing.T) {
 	t.Parallel()
 
-	str := "INCA DECA SETA 12"
+	str := `INCA
+	DECA
+	SETA 12`
 
 	want := []gmachine.Word{
 		gmachine.OpINCA,
@@ -359,7 +323,7 @@ func TestLabelAssemble(t *testing.T) {
 func TestDuplicateLabelAssemble(t *testing.T) {
 	t.Parallel()
 
-	str := "LABEL: INCA LABEL DECA"
+	str := "LABEL: INCA LABEL: DECA"
 
 	wantError := true
 	_, err := gmachine.AssembleFromFile(str)
